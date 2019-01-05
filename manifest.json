@@ -1,0 +1,24 @@
+{
+  "name": "WebSocket sniffer",
+  "version": "1.0",
+  "description": "Sniff your WebSocket!",
+  "permissions": ["tabs", "https://*/*", "declarativeContent", "debugger"],
+  "background": {
+  	"scripts": [
+      "background.js"
+    ],
+  	"persistent": false
+  },
+  "page_action": {
+  	"default_popup": "popup.html",
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.chaturbate.com/b/*"],
+      "run_at": "document_start",
+      "js": ["contentScript.js"]
+    }
+  ],
+  "manifest_version": 2
+}
