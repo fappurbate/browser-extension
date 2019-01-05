@@ -59,6 +59,19 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 });
 
 function onTip(from, amount) {
-  console.log('got ' + amount + ' tokens from ' + from);
-  state.tips.push({ amount });
+  console.log(`Got ${amount} tokens from ${from}.`);
+
+  fetch(`${state.backend}/api/tips`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      tipper: from,
+      amount
+    })
+  })
+  .catch(error => {
+    console.error(`Failed to forward tip to backend.`, error);
+  });
 }
