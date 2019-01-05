@@ -1,20 +1,35 @@
 'use strict';
 
-window.kothique = {};
+const state = window.kothique = {};
 window.kothique.backend = 'http://localhost:8887';
+window.kothique.activeTabId = null;
 
 chrome.runtime.onInstalled.addListener(function () {
 });
 
-let first = true;
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  if (tabId === state.activeTabId) {
+    console.log('Disconnected from the broadcast page.');
+    state.activeTabId = null;
+  }
+});
+
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete' && tab.active) {
     if (tab.url.indexOf('chaturbate.com/b/') === -1) { return; }
 
-    if (!first) { return; }
-    first = false;
+    console.log(`Chaturbate broadcast open at ${tab.url}`);
 
+    if (state.activeTabId !== null) {
+      console.log(`Detaching from the old broadcast page...`);
+      chrome.debugger.detach({ tabId: state.activeTabId });
+      state.activeTabId = null;
+    }
+
+    console.log(`Attaching debugger...`);
     chrome.debugger.attach({ tabId: tab.id }, '1.1', function () {
+      state.activeTabId = tab.id;
+
       chrome.debugger.sendCommand({ tabId: tab.id }, 'Network.enable');
 
       chrome.debugger.onEvent.addListener(function (source, method, params) {
@@ -45,5 +60,5 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
 function onTip(from, amount) {
   console.log('got ' + amount + ' tokens from ' + from);
-  window.kothique.tips.push({ amount });
+  state.tips.push({ amount });
 }
