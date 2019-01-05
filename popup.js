@@ -1,11 +1,10 @@
 'use strict';
 
-const tipList = document.getElementById('tipList');
-
 const bg = chrome.extension.getBackgroundPage();
 
-for (const tip of bg.kothique.tips) {
-  const li = document.createElement('li');
-  li.appendChild(document.createTextNode(tip.amount + ' tokens'));
-  tipList.appendChild(li);
-}
+const backendInput = document.getElementById('backend');
+backendInput.setAttribute('value', bg.kothique.backend);
+
+backendInput.addEventListener('change', function (event) {
+  bg.kothique.backend = event.target.value;
+});

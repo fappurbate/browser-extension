@@ -1,21 +1,9 @@
 'use strict';
 
 window.kothique = {};
-window.kothique.tips = [];
+window.kothique.backend = 'http://localhost:8887';
 
 chrome.runtime.onInstalled.addListener(function () {
-  chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-    chrome.declarativeContent.onPageChanged.addRules([{
-      conditions: [
-        new chrome.declarativeContent.PageStateMatcher({
-          pageUrl: {hostSuffix: 'chaturbate.com'},
-        })
-      ],
-      actions: [
-        new chrome.declarativeContent.ShowPageAction()
-      ]
-    }]);
-  });
 });
 
 let first = true;
