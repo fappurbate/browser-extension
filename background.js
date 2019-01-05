@@ -7,12 +7,11 @@ window.kothique.activeTabId = null;
 chrome.runtime.onInstalled.addListener(function () {
 });
 
-chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  if (tabId === state.activeTabId) {
-    console.log('Disconnected from the broadcast page.');
-    state.activeTabId = null;
-  }
-});
+let oldSkipped = false;
+
+function refresh() {
+  oldSkipped = false;
+}
 
 chrome.debugger.onEvent.addListener(function (source, method, params) {
   if (method === 'Network.webSocketFrameSent') {
@@ -25,6 +24,12 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
     if (payload[0] === 'a') {
       const data = JSON.parse(JSON.parse(payload.substr(1))[0]);
 
+      if (data.method === 'onRoomCountUpdate') {
+        oldSkipped = true;
+      }
+
+      if (oldSkipped === false) { return; }
+
       if (data.method === 'onNotify') {
         if (!data.args.length) { return; }
         const notification = JSON.parse(data.args[0]);
@@ -34,6 +39,13 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
         }
       }
     }
+  }
+});
+
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  if (tabId === state.activeTabId) {
+    console.log('Disconnected from the broadcast page.');
+    state.activeTabId = null;
   }
 });
 
@@ -48,6 +60,8 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       chrome.debugger.detach({ tabId: state.activeTabId });
       state.activeTabId = null;
     }
+
+    refresh();
 
     console.log(`Attaching debugger...`);
     chrome.debugger.attach({ tabId: tab.id }, '1.1', function () {
