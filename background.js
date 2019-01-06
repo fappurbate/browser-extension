@@ -1,18 +1,13 @@
 'use strict';
 
-const state = window.kothique = {};
-state.backend = 'http://localhost:8887';
-state.activeTabId = null;
-state.broadcaster = null;
-
 chrome.runtime.onInstalled.addListener(function () {
+  chrome.storage.local.set({
+    activeTabId: null,
+    broadcaster: null,
+    oldSkipped: false,
+    backend: 'http://localhost:8887'
+  });
 });
-
-let oldSkipped = false;
-
-function refresh() {
-  oldSkipped = false;
-}
 
 chrome.debugger.onEvent.addListener(function (source, method, params) {
   if (method === 'Network.webSocketFrameSent') {
@@ -22,7 +17,9 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
       const data = JSON.parse(JSON.parse(payload)[0]);
 
       if (data.method === 'joinRoom') {
-        state.broadcaster = data.data.room;
+        chrome.storage.local.set({ broadcaster: data.data.room }, function () {
+          // ...
+        });
       }
     }
   }
@@ -33,30 +30,40 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
     if (payload[0] === 'a') {
       const data = JSON.parse(JSON.parse(payload.substr(1))[0]);
 
-      if (data.method === 'onRoomCountUpdate') {
-        oldSkipped = true;
-      }
+      chrome.storage.local.get(['oldSkipped'], function ({ oldSkipped }) {
+        if (data.method === 'onRoomCountUpdate') {
+          chrome.storage.local.set({ oldSkipped: true }, function () {
+            // ...
+          });
+        } else if (data.method === 'onNotify') {
+          if (oldSkipped === false) { return; }
 
-      if (oldSkipped === false) { return; }
+          if (!data.args.length) { return; }
+          const notification = JSON.parse(data.args[0]);
 
-      if (data.method === 'onNotify') {
-        if (!data.args.length) { return; }
-        const notification = JSON.parse(data.args[0]);
-
-        if (notification.type === 'tip_alert') {
-          onTip(notification.from_username, notification.amount);
+          if (notification.type === 'tip_alert') {
+            onTip(notification.from_username, notification.amount);
+          }
         }
-      }
+      });
     }
   }
 });
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  if (tabId === state.activeTabId) {
-    console.log('Disconnected from the broadcast page.');
-    state.activeTabId = null;
-    state.broadcaster = null;
-  }
+  chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
+    if (tabId === activeTabId) {
+      console.log('Disconnected from the broadcast page.');
+
+      chrome.storage.local.set({
+        activeTabId: null,
+        broadcaster: null,
+        oldSkipped: false
+      }, function () {
+        // ...
+      });
+    }
+  });
 });
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
@@ -64,40 +71,48 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (tab.url.indexOf('chaturbate.com/b/') === -1) { return; }
 
     console.log(`Chaturbate broadcast open at ${tab.url}`);
-    state.broadcaster = null;
-    refresh();
+    chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
+      chrome.storage.local.set({
+        activeTabId: null,
+        broadcaster: null,
+        oldSkipped: false
+      }, function () {
+        // If the tab has changed
+        if (tabId !== activeTabId) {
+          if (activeTabId !== null) {
+            console.log(`Detaching debugger from the old broadcast page...`);
+            chrome.debugger.detach({ tabId: window.kothique.activeTabId });
+          }
 
-    if (tabId !== state.activeTabId) {
-      if (state.activeTabId !== null) {
-        console.log(`Detaching debugger from the old broadcast page...`);
-        chrome.debugger.detach({ tabId: state.activeTabId });
-        state.activeTabId = null;
-      }
-
-      console.log(`Attaching debugger...`);
-      chrome.debugger.attach({ tabId }, '1.1', function () {
-        state.activeTabId = tabId;
-        chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+          console.log(`Attaching debugger to the new broadcast page...`);
+          chrome.debugger.attach({ tabId }, '1.1', function () {
+            chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+            chrome.storage.local.set({ activeTabId: tabId }, function () {
+              // ...
+            });
+          });
+        }
       });
-    }
+    });
   }
 });
 
-function onTip(from, amount) {
-  console.log(`Got ${amount} tokens from ${from}.`);
+function onTip(tipper, amount) {
+  console.log(`Got ${amount} tokens from ${tipper}.`);
 
-  fetch(`${state.backend}/api/tips`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      broadcaster: state.broadcaster,
-      tipper: from,
-      amount
-    })
-  })
-  .catch(error => {
-    console.error(`Failed to forward tip to backend:`, error);
+  chrome.storage.local.get(['backend', 'broadcaster'], function ({
+    backend, broadcaster
+  }) {
+    fetch(`${backend}/api/tips`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        broadcaster,
+        tipper,
+        amount
+      })
+    }).catch(function (error) {
+      console.error(`Failed to forward tip to backend:`, error);
+    });
   });
 }

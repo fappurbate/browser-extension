@@ -1,20 +1,23 @@
 'use strict';
 
-const bg = chrome.extension.getBackgroundPage();
-const state = bg.kothique;
+chrome.storage.local.get(['activeTabId', 'broadcaster', 'backend'], function ({
+  activeTabId, broadcaster, backend
+}) {
+  // Status
+  const status = document.getElementById('status');
+  status.innerHTML = activeTabId === null
+    ? `<span class="disconnected">Disconnected</span>`
+    : `<span class="connected">
+        Connected${broadcaster ? ` as ${broadcaster}` : ''}
+      </span>`;
 
-// Status
-const status = document.getElementById('status');
-status.innerHTML = state.activeTabId === null
-  ? `<span class="disconnected">Disconnected</span>`
-  : `<span class="connected">
-      Connected${state.broadcaster ? ` as ${state.broadcaster}` : ''}
-    </span>`;
+  // Backend address setting
+  const backendInput = document.getElementById('backend');
+  backendInput.setAttribute('value', backend);
 
-// Backend address setting
-const backendInput = document.getElementById('backend');
-backendInput.setAttribute('value', state.backend);
-
-backendInput.addEventListener('change', function (event) {
-  state.backend = event.target.value;
+  backendInput.addEventListener('change', function (event) {
+    chrome.storage.local.set({ backend: event.target.value }, function () {
+      // ...
+    });
+  });
 });

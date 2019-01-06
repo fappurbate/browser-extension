@@ -2,7 +2,7 @@
   "name": "Chaturbate Chat Sniffer",
   "version": "0.1",
   "description": "Sniff your Chaturbate!",
-  "permissions": ["tabs", "https://*/*", "declarativeContent", "debugger"],
+  "permissions": ["tabs", "https://*/*", "declarativeContent", "debugger", "storage"],
   "background": {
   	"scripts": [
       "background.js"
