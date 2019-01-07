@@ -15,9 +15,14 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
 
     if (payload[0] === '[') {
       const data = JSON.parse(JSON.parse(payload)[0]);
+      console.log(data);
 
       if (data.method === 'joinRoom') {
         chrome.storage.local.set({ broadcaster: data.data.room }, function () {
+          // ...
+        });
+      } else if (data.method === 'updateRoomCount') {
+        chrome.storage.local.set({ broadcaster: data.data.model_name }, function () {
           // ...
         });
       }
@@ -79,17 +84,27 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       }, function () {
         // If the tab has changed
         if (tabId !== activeTabId) {
-          if (activeTabId !== null) {
-            console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId: window.kothique.activeTabId });
+          function attach(callback) {
+            console.log(`Attaching debugger to the new broadcast page...`);
+            chrome.debugger.attach({ tabId }, '1.1', function () {
+              chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+              chrome.storage.local.set({ activeTabId: tabId }, callback);
+            });
           }
 
-          console.log(`Attaching debugger to the new broadcast page...`);
-          chrome.debugger.attach({ tabId }, '1.1', function () {
-            chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-            chrome.storage.local.set({ activeTabId: tabId }, function () {
-              // ...
+          if (activeTabId !== null) {
+            console.log(`Detaching debugger from the old broadcast page...`);
+            chrome.debugger.detach({ tabId: window.kothique.activeTabId }, function () {
+              attach(function () {
+                // ...
+              })
             });
+
+            return;
+          }
+
+          attach(function () {
+            // ...
           });
         }
       });
