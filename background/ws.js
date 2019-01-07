@@ -1,7 +1,9 @@
 'use strict'
 
 let ws = null;
+let wsHandlers = {};
 let sendTip = null;
+let sendTranslationRequest = null;
 
 (function () {
   const queue = [];
@@ -33,7 +35,8 @@ let sendTip = null;
     ws.addEventListener('message', event => {
       const { type, data } = JSON.parse(event.data);
 
-      // if (type === '' ...) {
+      const handler = wsHandlers[type];
+      handler && handler(data);
     });
   });
 
@@ -44,5 +47,18 @@ let sendTip = null;
     };
 
     sendMessage(JSON.stringify(msg));
-  }
+  };
+
+  sendTranslationRequest = function sendTranslationRequest(tabId, msgId, content) {
+    const msg = {
+      type: 'translation-request',
+      data: {
+        tabId,
+        msgId,
+        content: content.trim()
+      }
+    };
+
+    sendMessage(JSON.stringify(msg));
+  };
 })();

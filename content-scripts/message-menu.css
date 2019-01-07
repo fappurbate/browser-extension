@@ -1,4 +1,20 @@
-.text:hover {
+div.text[data-msg-state="normal"]:hover {
   background-color: rgba(127, 127, 127, 0.3);
   cursor: pointer;
+}
+
+div.text[data-msg-state="await-translation"] {
+  border: 2px solid #0c6a93;
+}
+
+div.text[data-msg-state="translated"] {
+  border: 2px solid green;
+  border-bottom: none;
+}
+
+.translation {
+  border: 2px solid green;
+  border-top: none;
+  margin-top: -5px;
+  font-weight: bold;
 }

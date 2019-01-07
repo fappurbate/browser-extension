@@ -1,5 +1,7 @@
 'use strict';
 
+const ports = {};
+
 chrome.runtime.onInstalled.addListener(function () {
   chrome.storage.local.set({
     activeTabId: null,
@@ -127,10 +129,47 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   }
 });
 
+chrome.runtime.onConnect.addListener(function (port) {
+  ports[port.sender.tab.id] = port;
+
+  port.onDisconnect.addListener(function () {
+    delete ports[port.sender.tab.id];
+  });
+
+  port.onMessage.addListener(function (msg) {
+    const { msgId, content } = msg.data;
+
+    if (msg.type === 'request-translation') {
+      onRequestTranslation(port.sender.tab.id, msgId, content);
+    }
+  });
+});
+
+wsHandlers['translation'] = function (data) {
+  const { tabId, msgId, content } = data;
+
+  const port = ports[tabId];
+  if (!port) {
+    console.error('No port found!');
+    return;
+  }
+
+  port.postMessage({
+    type: 'translation',
+    data: { msgId, content }
+  });
+}
+
 function onTip(tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
 
   chrome.storage.local.get(['broadcaster'], function ({ broadcaster }) {
     sendTip(broadcaster, tipper, amount);
   });
+}
+
+function onRequestTranslation(tabId, msgId, content) {
+  console.log(`Request translation: ${content}`);
+
+  sendTranslationRequest(tabId, msgId, content);
 }
