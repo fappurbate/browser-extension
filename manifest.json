@@ -7,9 +7,10 @@
   ],
   "background": {
   	"scripts": [
-      "background.js"
+      "background/ws.js",
+      "background/main.js"
     ],
-  	"persistent": false
+  	"persistent": true
   },
   "browser_action": {
     "default_title": "Chaturbate Chat Sniffer",

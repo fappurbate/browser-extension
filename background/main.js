@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(function () {
     activeTabId: null,
     broadcaster: null,
     oldSkipped: false,
-    backend: 'http://localhost:8887'
+    backend: 'ws://localhost:8889'
   }, function () {
     // ...
   });
@@ -17,7 +17,6 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
 
     if (payload[0] === '[') {
       const data = JSON.parse(JSON.parse(payload)[0]);
-      console.log(data);
 
       if (data.method === 'joinRoom') {
         chrome.storage.local.set({ broadcaster: data.data.room }, function () {
@@ -73,9 +72,20 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   });
 });
 
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete') {
-    if (tab.url.indexOf('chaturbate.com/b/') === -1) { return; }
+    if (tab.url.indexOf('chaturbate.com/b/') === -1) {
+      // Navigated away from broadcasting in the same tab
+      chrome.storage.local.set({
+        activeTabId: null,
+        broadcaster: null,
+        oldSkipped: false
+      }, async function () {
+        // ...
+      });
+
+      return;
+    }
 
     console.log(`Chaturbate broadcast open at ${tab.url}`);
     chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
@@ -83,31 +93,29 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         activeTabId: null,
         broadcaster: null,
         oldSkipped: false
-      }, function () {
+      }, async function () {
         // If the tab has changed
         if (tabId !== activeTabId) {
-          function attach(callback) {
-            console.log(`Attaching debugger to the new broadcast page...`);
-            chrome.debugger.attach({ tabId }, '1.1', function () {
-              chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-              chrome.storage.local.set({ activeTabId: tabId }, callback);
+          function attach() {
+            return new Promise(function (resolve) {
+              console.log(`Attaching debugger to the new broadcast page...`);
+              chrome.debugger.attach({ tabId }, '1.1', function () {
+                chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+                chrome.storage.local.set({ activeTabId: tabId }, resolve);
+              });
             });
           }
 
           if (activeTabId !== null) {
             console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId: window.kothique.activeTabId }, function () {
-              attach(function () {
-                // ...
-              })
+            chrome.debugger.detach({ tabId: window.kothique.activeTabId }, async function () {
+              await attach();
             });
 
             return;
           }
 
-          attach(function () {
-            // ...
-          });
+          await attach();
         }
       });
     });
@@ -117,19 +125,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 function onTip(tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
 
-  chrome.storage.local.get(['backend', 'broadcaster'], function ({
-    backend, broadcaster
-  }) {
-    fetch(`${backend}/api/tips`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        broadcaster,
-        tipper,
-        amount
-      })
-    }).catch(function (error) {
-      console.error(`Failed to forward tip to backend:`, error);
-    });
+  chrome.storage.local.get(['broadcaster'], function ({ broadcaster }) {
+    sendTip(broadcaster, tipper, amount);
   });
 }
