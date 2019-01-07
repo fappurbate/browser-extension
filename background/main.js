@@ -107,8 +107,12 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
             return new Promise(function (resolve) {
               console.log(`Attaching debugger to the new broadcast page...`);
               chrome.debugger.attach({ tabId }, '1.1', function () {
-                chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-                chrome.storage.local.set({ activeTabId: tabId }, resolve);
+                if (chrome.runtime.lastError) {
+                  console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
+                } else {
+                  chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+                  chrome.storage.local.set({ activeTabId: tabId }, resolve);
+                }
               });
             });
           }
