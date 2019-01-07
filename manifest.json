@@ -14,7 +14,13 @@
   },
   "browser_action": {
     "default_title": "Chaturbate Chat Sniffer",
-  	"default_popup": "popup.html"
+  	"default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/logo16.png",
+      "32": "images/logo32.png",
+      "48": "images/logo48.png",
+      "128": "images/logo128.png"
+    }
   },
   "content_scripts": [
     {
@@ -24,5 +30,11 @@
       "run_at": "document_end"
     }
   ],
+  "icons": {
+    "16": "images/logo16.png",
+    "32": "images/logo32.png",
+    "48": "images/logo48.png",
+    "128": "images/logo128.png"
+  },
   "manifest_version": 2
 }
