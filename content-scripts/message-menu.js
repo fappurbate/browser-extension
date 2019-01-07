@@ -1,5 +1,3 @@
-const chatList = document.querySelector('.chat-list');
-
 const observer = new MutationObserver(function (mutations) {
   mutations.forEach(function (mutation) {
     mutation.addedNodes.forEach(function (node) {
@@ -22,4 +20,4 @@ const observer = new MutationObserver(function (mutations) {
     });
   });
 });
-observer.observe(chatList, { childList: true });
+observer.observe(document.body, { childList: true });

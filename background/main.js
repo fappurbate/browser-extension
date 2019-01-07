@@ -74,21 +74,26 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete') {
-    if (tab.url.indexOf('chaturbate.com/b/') === -1) {
-      // Navigated away from broadcasting in the same tab
-      chrome.storage.local.set({
-        activeTabId: null,
-        broadcaster: null,
-        oldSkipped: false
-      }, async function () {
-        // ...
-      });
-
-      return;
-    }
-
-    console.log(`Chaturbate broadcast open at ${tab.url}`);
     chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
+      if (tab.url.indexOf('chaturbate.com/b/') === -1) {
+        // Navigated away from broadcasting in the same tab
+        if (tabId === activeTabId) {
+          chrome.storage.local.set({
+            activeTabId: null,
+            broadcaster: null,
+            oldSkipped: false
+          }, function () {
+            console.log(`Detaching debugger from the old broadcast page...`);
+            chrome.debugger.detach({ tabId }, function () {
+              // ...
+            });
+          });
+        }
+
+        return;
+      }
+
+      console.log(`Chaturbate broadcast open at ${tab.url}`);
       chrome.storage.local.set({
         activeTabId: null,
         broadcaster: null,
@@ -108,7 +113,7 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
 
           if (activeTabId !== null) {
             console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId: window.kothique.activeTabId }, async function () {
+            chrome.debugger.detach({ tabId: activeTabId }, async function () {
               await attach();
             });
 

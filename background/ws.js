@@ -7,7 +7,7 @@ let sendTip = null;
   const queue = [];
 
   function sendMessage(msg) {
-    if (!ws) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
       queue.push(msg);
     } else {
       queue.forEach(msg => ws.send(msg));
@@ -21,6 +21,9 @@ let sendTip = null;
 
     ws.addEventListener('open', () => {
       console.log(`WS: connected to ${backend}.`);
+
+      queue.forEach(msg => ws.send(msg));
+      queue.length = 0;
     });
 
     ws.addEventListener('close', () => {
