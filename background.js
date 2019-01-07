@@ -6,6 +6,8 @@ chrome.runtime.onInstalled.addListener(function () {
     broadcaster: null,
     oldSkipped: false,
     backend: 'http://localhost:8887'
+  }, function () {
+    // ...
   });
 });
 

@@ -2,7 +2,9 @@
   "name": "Chaturbate Chat Sniffer",
   "version": "0.1",
   "description": "Sniff your Chaturbate!",
-  "permissions": ["tabs", "https://*/*", "declarativeContent", "debugger", "storage"],
+  "permissions": [
+    "tabs", "https://*/*", "declarativeContent", "debugger", "storage"
+  ],
   "background": {
   	"scripts": [
       "background.js"
@@ -13,5 +15,13 @@
     "default_title": "Chaturbate Chat Sniffer",
   	"default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://*.chaturbate.com/*"],
+      "css": ["content-scripts/message-menu.css"],
+      "js": ["content-scripts/message-menu.js"],
+      "run_at": "document_end"
+    }
+  ],
   "manifest_version": 2
 }
