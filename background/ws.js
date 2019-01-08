@@ -4,6 +4,7 @@ let ws = null;
 let wsHandlers = {};
 let sendTip = null;
 let sendTranslationRequest = null;
+let sendCancelTranslationRequest = null;
 
 (function () {
   const RECONNECT_INTERVAL = 2000;
@@ -85,4 +86,13 @@ let sendTranslationRequest = null;
 
     sendMessage(JSON.stringify(msg));
   };
+
+  sendCancelTranslationRequest = function sendCancelTranslationRequest(tabId, msgId) {
+    const msg = {
+      type: 'cancel-translation-request',
+      data: { tabId, msgId }
+    };
+
+    sendMessage(JSON.stringify(msg));
+  }
 })();

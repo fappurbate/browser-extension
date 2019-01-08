@@ -32,14 +32,23 @@ const observer = new MutationObserver(function (mutations) {
         }, false);
         node.addEventListener('mouseup', async function () {
           if (!moved) {
-            if (node.getAttribute('data-msg-state') === 'normal') {
+            const state = node.getAttribute('data-msg-state');
+
+            if (state === 'normal') {
               node.setAttribute('data-msg-state', 'await-translation');
 
               const msgId = currMessageId++;
               node.setAttribute('data-msg-id', msgId);
               messageById[msgId] = node;
 
-              await requestTranslation(msgId, node.innerText);
+              requestTranslation(msgId, node.innerText);
+            }
+
+            else if (state === 'await-translation') {
+              node.setAttribute('data-msg-state', 'normal');
+
+              const msgId = Number(node.getAttribute('data-msg-id'));
+              requestCancelTranslation(msgId);
             }
           }
         }, false);
@@ -49,11 +58,16 @@ const observer = new MutationObserver(function (mutations) {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-async function requestTranslation(msgId, content) {
-  return new Promise(function (resolve) {
-    port.postMessage({
-      type: 'request-translation',
-      data: { msgId, content }
-    });
+function requestTranslation(msgId, content) {
+  port.postMessage({
+    type: 'request-translation',
+    data: { msgId, content }
+  });
+}
+
+function requestCancelTranslation(msgId) {
+  port.postMessage({
+    type: 'request-cancel-translation',
+    data: { msgId }
   });
 }

@@ -145,6 +145,8 @@ chrome.runtime.onConnect.addListener(function (port) {
 
     if (msg.type === 'request-translation') {
       onRequestTranslation(port.sender.tab.id, msgId, content);
+    } else if (msg.type === 'request-cancel-translation') {
+      onRequestCancelTranslation(port.sender.tab.id, msgId);
     }
   });
 });
@@ -173,7 +175,13 @@ function onTip(tipper, amount) {
 }
 
 function onRequestTranslation(tabId, msgId, content) {
-  console.log(`Request translation: ${content}`);
+  console.log(`Request translation (${tabId}, ${msgId}): ${content}`);
 
   sendTranslationRequest(tabId, msgId, content);
+}
+
+function onRequestCancelTranslation(tabId, msgId) {
+  console.log(`Request cancel translation (${tabId}, ${msgId}).`);
+
+  sendCancelTranslationRequest(tabId, msgId);
 }

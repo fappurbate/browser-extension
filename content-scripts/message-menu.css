@@ -1,4 +1,5 @@
-div.text[data-msg-state="normal"]:hover {
+div.text[data-msg-state="normal"]:hover,
+div.text[data-msg-state="await-translation"]:hover {
   background-color: rgba(127, 127, 127, 0.3);
   cursor: pointer;
 }
