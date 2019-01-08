@@ -6,6 +6,8 @@ let sendTip = null;
 let sendTranslationRequest = null;
 
 (function () {
+  const RECONNECT_INTERVAL = 2000;
+
   const queue = [];
 
   function sendMessage(msg) {
@@ -18,26 +20,48 @@ let sendTranslationRequest = null;
     }
   }
 
-  chrome.storage.local.get(['backend'], function ({ backend }) {
-    ws = new WebSocket(backend);
+  function connect(url) {
+    ws = new WebSocket(url);
 
-    ws.addEventListener('open', () => {
-      console.log(`WS: connected to ${backend}.`);
+    ws.addEventListener('open', function () {
+      console.log(`WS: connected to ${url}.`);
 
       queue.forEach(msg => ws.send(msg));
       queue.length = 0;
     });
 
-    ws.addEventListener('close', () => {
-      console.log(`WS: connected closed.`);
+    ws.addEventListener('close', function () {
+      console.log(`WS: connected closed. Reconnecting to ${url}...`);
+      setTimeout(function () {
+        connect(url);
+      }, RECONNECT_INTERVAL);
     });
 
-    ws.addEventListener('message', event => {
+    ws.addEventListener('message', function (event) {
       const { type, data } = JSON.parse(event.data);
 
       const handler = wsHandlers[type];
       handler && handler(data);
     });
+  }
+
+  function reconnect(url) {
+    if (ws && ws.readyState !== WebSocket.CLOSE || ws.readyState !== WebSocket.CLOSING) {
+      ws.close();
+    }
+    connect(url);
+  }
+
+  chrome.storage.onChanged.addListener(function (changes, areaName) {
+    if (areaName === 'local' && changes.backend) {
+      console.log('WS: backend url has changed. Reconnecting...');
+      reconnect(changes.backend.newValue);
+    }
+  });
+
+  chrome.storage.local.get(['backend'], function ({ backend }) {
+    console.log(`WS: connecting to ${backend}.`);
+    connect(backend);
   });
 
   sendTip = function sendTip(broadcaster, tipper, amount) {
