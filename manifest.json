@@ -5,6 +5,7 @@
   "permissions": [
     "tabs", "https://*/*", "declarativeContent", "debugger", "storage"
   ],
+  "content_security_policy": "script-src 'self' 'unsafe-eval' https://unpkg.com; object-src 'self'",
   "background": {
   	"scripts": [
       "background/ws.js",
@@ -14,7 +15,7 @@
   },
   "browser_action": {
     "default_title": "Chaturbate Chat Sniffer",
-  	"default_popup": "popup.html",
+  	"default_popup": "popup/index.html",
     "default_icon": {
       "16": "images/logo16.png",
       "32": "images/logo32.png",

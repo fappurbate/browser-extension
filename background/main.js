@@ -120,6 +120,9 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
           if (activeTabId !== null) {
             console.log(`Detaching debugger from the old broadcast page...`);
             chrome.debugger.detach({ tabId: activeTabId }, async function () {
+              if (chrome.runtime.lastError) {
+                console.debug(`Couldn't detach debugger from tab ${activeTabId}: ${$chrome.runtime.lastError}.`);
+              }
               await attach();
             });
 
