@@ -20,12 +20,8 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
     if (payload[0] === '[') {
       const data = JSON.parse(JSON.parse(payload)[0]);
 
-      if (data.method === 'joinRoom') {
-        chrome.storage.local.set({ broadcaster: data.data.room }, function () {
-          // ...
-        });
-      } else if (data.method === 'updateRoomCount') {
-        chrome.storage.local.set({ broadcaster: data.data.model_name }, function () {
+      if (data.method === 'connect') {
+        chrome.storage.local.set({ broadcaster: data.data.user }, function () {
           // ...
         });
       }
