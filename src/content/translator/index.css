@@ -1,6 +1,6 @@
-div.text[data-msg-state="normal"]:hover,
-div.text[data-msg-state="await-translation"]:hover {
-  background-color: rgba(127, 127, 127, 0.3);
+div.text:hover,
+div.text.active {
+  background-color: rgba(127, 127, 127, 0.3) !important;
   cursor: pointer;
 }
 
@@ -10,7 +10,6 @@ div.text[data-msg-state="await-translation"] {
 
 div.text[data-msg-state="translated"] {
   border: 2px solid green;
-  border-bottom: none;
 }
 
 .translation {
@@ -18,4 +17,44 @@ div.text[data-msg-state="translated"] {
   border-top: none;
   margin-top: -5px;
   font-weight: bold;
+}
+
+#drop-overlay {
+  display: none;
+  z-index: 99999;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.msg-menu {
+  background-color: #0c6a93;
+  border: 1px solid #0c6a93;
+}
+
+.msg-menu-button {
+  background-color: purple;
+  width: 10px;
+  height: 20px;
+}
+
+.msg-menu-drop {
+  z-index: 100000;
+}
+
+.msg-menu-item {
+  padding: 0.3em 0.5em;
+  cursor: pointer;
+  color: white;
+}
+
+.msg-menu-item:not(:last-child) {
+  border-bottom: 1px solid white;
+}
+
+.msg-menu-item:hover {
+  background-color: white;
+  color: #0c6a93;
 }

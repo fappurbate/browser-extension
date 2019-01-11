@@ -1,7 +1,12 @@
 import 'babel-polyfill';
 
+import Drop from 'tether-drop';
+import Tether from 'tether';
+
+import { onHold } from '../common/util';
+
 const CURSOR_OFFSET = 3;
-const HOLD_DURATION = 700;
+const HOLD_DURATION = 500;
 
 const port = chrome.runtime.connect();
 port.onMessage.addListener(msg => {
@@ -18,63 +23,116 @@ port.onMessage.addListener(msg => {
   }
 });
 
-const messageById = {};
-let currMessageId = 0;
+const chatList = document.querySelector('.chat-list');
+if (chatList) {
+  const messageById = {};
+  const dropByMessage = {};
+  let currMessageId = 0;
 
-const observer = new MutationObserver(mutations =>
-  mutations.forEach(mutation =>
-    mutation.addedNodes.forEach(node => {
-      if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
-        node.setAttribute('title', 'Click to send to Kothique');
-        node.setAttribute('data-msg-state', 'normal');
+  const observer = new MutationObserver(mutations =>
+    mutations.forEach(mutation =>
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
+          node.setAttribute('title', 'Hold to open menu.');
+          node.setAttribute('data-msg-state', 'normal');
+          onHold(node, () => onMessageAction(node));
+        }
+      })
+    )
+  );
+  observer.observe(chatList, { childList: true, subtree: true });
 
-        let timeoutId = null;
-        node.addEventListener('mousedown', () => {
-          timeoutId = setTimeout(() => {
-            const state = node.getAttribute('data-msg-state');
+  const dropOverlay = document.createElement('div');
+  dropOverlay.id = 'drop-overlay';
+  document.body.insertBefore(dropOverlay, document.body.firstChild);
 
-            if (state === 'normal') {
-              node.setAttribute('data-msg-state', 'await-translation');
+  function onMessageAction(node) {
+    console.log('so');
+    const state = node.getAttribute('data-msg-state');
 
-              const msgId = currMessageId++;
-              node.setAttribute('data-msg-id', msgId);
-              messageById[msgId] = node;
+    const menu = document.createElement('div');
+    menu.classList.add('msg-menu');
+    menu.style.fontSize = chatList.style.fontSize;
 
-              requestTranslation(msgId, node.innerText);
-            }
+    [
+      {
+        text: 'Ask Kothique',
+        show: state === 'normal' || state === 'translated',
+        action: () => {
+          node.setAttribute('data-msg-state', 'await-translation');
 
-            else if (state === 'await-translation') {
-              node.setAttribute('data-msg-state', 'normal');
+          const msgId = currMessageId++;
+          node.setAttribute('data-msg-id', msgId);
+          messageById[msgId] = node;
 
-              const msgId = Number(node.getAttribute('data-msg-id'));
-              requestCancelTranslation(msgId);
-            }
-          }, HOLD_DURATION);
-        }, false);
-        node.addEventListener('mousemove', () => {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }, false);
-        node.addEventListener('mouseup', async () => {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }, false);
+          requestTranslation(msgId, node.innerText);
+        }
+      },
+      {
+        text: 'Ask GTranslate',
+        show: state === 'normal' || state === 'translated',
+        action: () => {
+        }
+      },
+      {
+        text: 'Cancel translation request',
+        show: state === 'await-translation',
+        action: () => {
+          node.setAttribute('data-msg-state', 'normal');
+
+          const msgId = Number(node.getAttribute('data-msg-id'));
+          requestCancelTranslation(msgId);
+        }
       }
-    })
-  )
-);
-observer.observe(document.body, { childList: true, subtree: true });
+    ].forEach(({ text, show, action }) => {
+      if (!show) { return; }
 
-function requestTranslation(msgId, content) {
-  port.postMessage({
-    type: 'request-translation',
-    data: { msgId, content }
-  });
-}
+      const item = document.createElement('div');
+      item.classList.add('msg-menu-item');
+      item.innerText = text;
+      item.addEventListener('click', () => {
+        action();
+        drop.finish();
+      });
+      menu.appendChild(item);
+    });
 
-function requestCancelTranslation(msgId) {
-  port.postMessage({
-    type: 'request-cancel-translation',
-    data: { msgId }
-  });
+    const drop = dropByMessage[node] = new Drop({
+      target: node,
+      content: menu,
+      classes: 'msg-menu-drop',
+      position: 'bottom left',
+      openOn: 'click'
+    });
+    drop.finish = () => {
+      dropOverlay.style.display = 'none';
+      dropOverlay.removeEventListener('click', drop.finish);
+
+      node.classList.remove('active');
+
+      drop.destroy();
+      delete dropByMessage[node];
+    };
+
+    dropOverlay.style.display = 'initial';
+    dropOverlay.addEventListener('click', drop.finish);
+
+    node.classList.add('active');
+
+    drop.open();
+  }
+
+  function requestTranslation(msgId, content) {
+    port.postMessage({
+      type: 'request-translation',
+      data: { msgId, content }
+    });
+  }
+
+  function requestCancelTranslation(msgId) {
+    port.postMessage({
+      type: 'request-cancel-translation',
+      data: { msgId }
+    });
+  }
 }
