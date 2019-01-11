@@ -1,19 +1,20 @@
-'use strict';
+import 'babel-polyfill';
+import { addWSHandler, sendTip, sendTranslationRequest, sendCancelTranslationRequest } from './ws';
 
 const ports = {};
 
-chrome.runtime.onInstalled.addListener(function () {
+chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     activeTabId: null,
     broadcaster: null,
     oldSkipped: false,
     backend: 'ws://localhost:8889'
-  }, function () {
+  }, () => {
     // ...
   });
 });
 
-chrome.debugger.onEvent.addListener(function (source, method, params) {
+chrome.debugger.onEvent.addListener((source, method, params) => {
   if (method === 'Network.webSocketFrameSent') {
     const payload = params.response.payloadData;
 
@@ -21,7 +22,7 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
       const data = JSON.parse(JSON.parse(payload)[0]);
 
       if (data.method === 'connect') {
-        chrome.storage.local.set({ broadcaster: data.data.user }, function () {
+        chrome.storage.local.set({ broadcaster: data.data.user }, () => {
           // ...
         });
       }
@@ -34,9 +35,9 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
     if (payload[0] === 'a') {
       const data = JSON.parse(JSON.parse(payload.substr(1))[0]);
 
-      chrome.storage.local.get(['oldSkipped'], function ({ oldSkipped }) {
+      chrome.storage.local.get(['oldSkipped'], ({ oldSkipped }) => {
         if (data.method === 'onRoomCountUpdate') {
-          chrome.storage.local.set({ oldSkipped: true }, function () {
+          chrome.storage.local.set({ oldSkipped: true }, () => {
             // ...
           });
         } else if (data.method === 'onNotify') {
@@ -54,8 +55,8 @@ chrome.debugger.onEvent.addListener(function (source, method, params) {
   }
 });
 
-chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+  chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
     if (tabId === activeTabId) {
       console.log('Disconnected from the broadcast page.');
 
@@ -63,16 +64,16 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
         activeTabId: null,
         broadcaster: null,
         oldSkipped: false
-      }, function () {
+      }, () => {
         // ...
       });
     }
   });
 });
 
-chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete') {
-    chrome.storage.local.get(['activeTabId'], function ({ activeTabId }) {
+    chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
       if (tab.url.indexOf('chaturbate.com/b/') === -1) {
         // Navigated away from broadcasting in the same tab
         if (tabId === activeTabId) {
@@ -80,9 +81,9 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
             activeTabId: null,
             broadcaster: null,
             oldSkipped: false
-          }, function () {
+          }, () => {
             console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId }, function () {
+            chrome.debugger.detach({ tabId }, () => {
               // ...
             });
           });
@@ -96,26 +97,24 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
         activeTabId: null,
         broadcaster: null,
         oldSkipped: false
-      }, async function () {
+      }, async () => {
         // If the tab has changed
         if (tabId !== activeTabId) {
-          function attach() {
-            return new Promise(function (resolve) {
-              console.log(`Attaching debugger to the new broadcast page...`);
-              chrome.debugger.attach({ tabId }, '1.1', function () {
-                if (chrome.runtime.lastError) {
-                  console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
-                } else {
-                  chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-                  chrome.storage.local.set({ activeTabId: tabId }, resolve);
-                }
-              });
+          const attach = () => new Promise(resolve => {
+            console.log(`Attaching debugger to the new broadcast page...`);
+            chrome.debugger.attach({ tabId }, '1.1', () => {
+              if (chrome.runtime.lastError) {
+                console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
+              } else {
+                chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+                chrome.storage.local.set({ activeTabId: tabId }, resolve);
+              }
             });
-          }
+          });
 
           if (activeTabId !== null) {
             console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId: activeTabId }, async function () {
+            chrome.debugger.detach({ tabId: activeTabId }, async () => {
               if (chrome.runtime.lastError) {
                 console.debug(`Couldn't detach debugger from tab ${activeTabId}: ${$chrome.runtime.lastError}.`);
               }
@@ -132,14 +131,14 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   }
 });
 
-chrome.runtime.onConnect.addListener(function (port) {
+chrome.runtime.onConnect.addListener(port => {
   ports[port.sender.tab.id] = port;
 
-  port.onDisconnect.addListener(function () {
+  port.onDisconnect.addListener(() => {
     delete ports[port.sender.tab.id];
   });
 
-  port.onMessage.addListener(function (msg) {
+  port.onMessage.addListener(msg => {
     const { msgId, content } = msg.data;
 
     if (msg.type === 'request-translation') {
@@ -150,7 +149,7 @@ chrome.runtime.onConnect.addListener(function (port) {
   });
 });
 
-wsHandlers['translation'] = function (data) {
+addWSHandler('translation', data => {
   const { tabId, msgId, content } = data;
 
   const port = ports[tabId];
@@ -163,12 +162,12 @@ wsHandlers['translation'] = function (data) {
     type: 'translation',
     data: { msgId, content }
   });
-}
+});
 
 function onTip(tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
 
-  chrome.storage.local.get(['broadcaster'], function ({ broadcaster }) {
+  chrome.storage.local.get(['broadcaster'], ({ broadcaster }) => {
     sendTip(broadcaster, tipper, amount);
   });
 }

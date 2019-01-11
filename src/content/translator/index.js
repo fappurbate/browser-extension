@@ -1,5 +1,5 @@
 const port = chrome.runtime.connect();
-port.onMessage.addListener(function (msg) {
+port.onMessage.addListener(msg => {
   if (msg.type === 'translation') {
     const { msgId, content } = msg.data;
 
@@ -16,21 +16,17 @@ port.onMessage.addListener(function (msg) {
 const messageById = {};
 let currMessageId = 0;
 
-const observer = new MutationObserver(function (mutations) {
-  mutations.forEach(function (mutation) {
-    mutation.addedNodes.forEach(function (node) {
+const observer = new MutationObserver(mutations =>
+  mutations.forEach(mutation =>
+    mutation.addedNodes.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
         node.setAttribute('title', 'Click to send to Kothique');
         node.setAttribute('data-msg-state', 'normal');
 
         let moved = false;
-        node.addEventListener('mousedown', function () {
-          moved = false;
-        }, false);
-        node.addEventListener('mousemove', function () {
-          moved = true;
-        }, false);
-        node.addEventListener('mouseup', async function () {
+        node.addEventListener('mousedown', () => moved = false, false);
+        node.addEventListener('mousemove', () => moved = true, false);
+        node.addEventListener('mouseup', async () => {
           if (!moved) {
             const state = node.getAttribute('data-msg-state');
 
@@ -53,9 +49,9 @@ const observer = new MutationObserver(function (mutations) {
           }
         }, false);
       }
-    });
-  });
-});
+    })
+  )
+);
 observer.observe(document.body, { childList: true, subtree: true });
 
 function requestTranslation(msgId, content) {
