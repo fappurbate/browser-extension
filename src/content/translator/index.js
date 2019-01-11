@@ -1,3 +1,8 @@
+import 'babel-polyfill';
+
+const CURSOR_OFFSET = 3;
+const HOLD_DURATION = 700;
+
 const port = chrome.runtime.connect();
 port.onMessage.addListener(msg => {
   if (msg.type === 'translation') {
@@ -23,11 +28,9 @@ const observer = new MutationObserver(mutations =>
         node.setAttribute('title', 'Click to send to Kothique');
         node.setAttribute('data-msg-state', 'normal');
 
-        let moved = false;
-        node.addEventListener('mousedown', () => moved = false, false);
-        node.addEventListener('mousemove', () => moved = true, false);
-        node.addEventListener('mouseup', async () => {
-          if (!moved) {
+        let timeoutId = null;
+        node.addEventListener('mousedown', () => {
+          timeoutId = setTimeout(() => {
             const state = node.getAttribute('data-msg-state');
 
             if (state === 'normal') {
@@ -46,7 +49,15 @@ const observer = new MutationObserver(mutations =>
               const msgId = Number(node.getAttribute('data-msg-id'));
               requestCancelTranslation(msgId);
             }
-          }
+          }, HOLD_DURATION);
+        }, false);
+        node.addEventListener('mousemove', () => {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }, false);
+        node.addEventListener('mouseup', async () => {
+          clearTimeout(timeoutId);
+          timeoutId = null;
         }, false);
       }
     })
