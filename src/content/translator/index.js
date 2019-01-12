@@ -23,8 +23,8 @@ port.onMessage.addListener(msg => {
   }
 });
 
-const chatList = document.querySelector('.chat-list');
-if (chatList) {
+const chatBox = document.querySelector('.chat-box');
+if (chatBox) {
   const messageById = {};
   const dropByMessage = {};
   let currMessageId = 0;
@@ -33,6 +33,7 @@ if (chatList) {
     mutations.forEach(mutation =>
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
+          console.log(node);
           node.setAttribute('title', 'Hold to open menu.');
           node.setAttribute('data-msg-state', 'normal');
           onHold(node, () => onMessageAction(node));
@@ -40,7 +41,7 @@ if (chatList) {
       })
     )
   );
-  observer.observe(chatList, { childList: true, subtree: true });
+  observer.observe(chatBox, { childList: true, subtree: true });
 
   const dropOverlay = document.createElement('div');
   dropOverlay.id = 'drop-overlay';
@@ -52,7 +53,6 @@ if (chatList) {
 
     const menu = document.createElement('div');
     menu.classList.add('msg-menu');
-    menu.style.fontSize = chatList.style.fontSize;
 
     [
       {
