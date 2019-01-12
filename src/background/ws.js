@@ -5,7 +5,7 @@ const queue = [];
 let ws = null;
 let wsHandlers = {};
 
-export function addWSHandler(type, handler) {
+export function addHandler(type, handler) {
   wsHandlers[type] = handler;
 }
 
@@ -76,7 +76,7 @@ export function sendTip(broadcaster, tipper, amount) {
 
 export function sendTranslationRequest(tabId, msgId, content) {
   const msg = {
-    type: 'translation-request',
+    type: 'request-translation',
     data: {
       tabId,
       msgId,
@@ -89,7 +89,7 @@ export function sendTranslationRequest(tabId, msgId, content) {
 
 export function sendCancelTranslationRequest(tabId, msgId) {
   const msg = {
-    type: 'cancel-translation-request',
+    type: 'request-cancel-translation',
     data: { tabId, msgId }
   };
 

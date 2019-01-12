@@ -33,7 +33,6 @@ if (chatBox) {
     mutations.forEach(mutation =>
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
-          console.log(node);
           node.setAttribute('title', 'Hold to open menu.');
           node.setAttribute('data-msg-state', 'normal');
           onHold(node, () => onMessageAction(node));
@@ -48,7 +47,6 @@ if (chatBox) {
   document.body.insertBefore(dropOverlay, document.body.firstChild);
 
   function onMessageAction(node) {
-    console.log('so');
     const state = node.getAttribute('data-msg-state');
 
     const menu = document.createElement('div');
@@ -65,13 +63,20 @@ if (chatBox) {
           node.setAttribute('data-msg-id', msgId);
           messageById[msgId] = node;
 
-          requestTranslation(msgId, node.innerText);
+          requestTranslation('operator', msgId, node.innerText);
         }
       },
       {
         text: 'Ask GTranslate',
         show: state === 'normal' || state === 'translated',
         action: () => {
+          node.setAttribute('data-msg-state', 'await-translation');
+
+          const msgId = currMessageId++;
+          node.setAttribute('data-msg-id', msgId);
+          messageById[msgId] = node;
+
+          requestTranslation('gtranslate', msgId, node.innerText);
         }
       },
       {
@@ -122,10 +127,10 @@ if (chatBox) {
     drop.open();
   }
 
-  function requestTranslation(msgId, content) {
+  function requestTranslation(translator, msgId, content) {
     port.postMessage({
       type: 'request-translation',
-      data: { msgId, content }
+      data: { translator, msgId, content }
     });
   }
 

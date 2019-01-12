@@ -16,7 +16,9 @@ div.text[data-msg-state="translated"] {
   border: 2px solid green;
   border-top: none;
   margin-top: -5px;
+  margin-bottom: 5px;
   font-weight: bold;
+  line-height: 120%;
 }
 
 #drop-overlay {

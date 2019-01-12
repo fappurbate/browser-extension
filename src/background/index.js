@@ -1,6 +1,6 @@
 import 'babel-polyfill';
-import { addWSHandler, sendTip, sendTranslationRequest, sendCancelTranslationRequest } from './ws';
-import './gtranslate';
+import * as WS from './ws';
+import * as GTranslate from './gtranslate';
 
 const ports = {};
 
@@ -143,8 +143,8 @@ chrome.runtime.onConnect.addListener(port => {
 
   port.onMessage.addListener(msg => {
     if (msg.type === 'request-translation') {
-      const { msgId, content } = msg.data;
-      onRequestTranslation(port.sender.tab.id, msgId, content);
+      const { translator, msgId, content } = msg.data;
+      onRequestTranslation(translator, port.sender.tab.id, msgId, content);
     } else if (msg.type === 'request-cancel-translation') {
       const { msgId } = msg.data;
       onRequestCancelTranslation(port.sender.tab.id, msgId);
@@ -152,7 +152,7 @@ chrome.runtime.onConnect.addListener(port => {
   });
 });
 
-addWSHandler('translation', data => {
+WS.addHandler('translation', data => {
   const { tabId, msgId, content } = data;
 
   const port = ports[tabId];
@@ -171,18 +171,31 @@ function onTip(tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
 
   chrome.storage.local.get(['broadcaster'], ({ broadcaster }) => {
-    sendTip(broadcaster, tipper, amount);
+    WS.sendTip(broadcaster, tipper, amount);
   });
 }
 
-function onRequestTranslation(tabId, msgId, content) {
-  console.log(`Request translation (${tabId}, ${msgId}): ${content}`);
+async function onRequestTranslation(translator, tabId, msgId, content) {
+  console.log(`Request translation from ${translator} (${tabId}, ${msgId}): ${content}`);
 
-  sendTranslationRequest(tabId, msgId, content);
+  if (translator === 'operator') {
+    WS.sendTranslationRequest(tabId, msgId, content);
+  } else if (translator === 'gtranslate') {
+    const translation = await GTranslate.translate(content);
+
+    const port = ports[tabId];
+    if (port) {
+      console.log(translation);
+      port.postMessage({
+        type: 'translation',
+        data: { msgId, content: translation }
+      });
+    }
+  }
 }
 
 function onRequestCancelTranslation(tabId, msgId) {
   console.log(`Request cancel translation (${tabId}, ${msgId}).`);
 
-  sendCancelTranslationRequest(tabId, msgId);
+  WS.sendCancelTranslationRequest(tabId, msgId);
 }
