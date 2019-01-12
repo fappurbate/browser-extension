@@ -1,5 +1,6 @@
 import 'babel-polyfill';
 import { addWSHandler, sendTip, sendTranslationRequest, sendCancelTranslationRequest } from './ws';
+import './gtranslate';
 
 const ports = {};
 
@@ -132,6 +133,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 });
 
 chrome.runtime.onConnect.addListener(port => {
+  if (!/chaturbate\.com/.test(port.sender.url)) { return; }
+
   ports[port.sender.tab.id] = port;
 
   port.onDisconnect.addListener(() => {
@@ -139,11 +142,11 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    const { msgId, content } = msg.data;
-
     if (msg.type === 'request-translation') {
+      const { msgId, content } = msg.data;
       onRequestTranslation(port.sender.tab.id, msgId, content);
     } else if (msg.type === 'request-cancel-translation') {
+      const { msgId } = msg.data;
       onRequestCancelTranslation(port.sender.tab.id, msgId);
     }
   });

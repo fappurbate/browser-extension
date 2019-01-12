@@ -26,6 +26,12 @@
       "css": ["content/translator.css"],
       "js": ["content/translator.js"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["https://translate.google.com/*", "https://translate.google.ru/*"],
+      "css": ["content/gtranslate.css"],
+      "js": ["content/gtranslate.js"],
+      "run_at": "document_end"
     }
   ],
   "icons": {

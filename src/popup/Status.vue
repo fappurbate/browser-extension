@@ -31,7 +31,7 @@ export default {
       } else if (changes.broadcaster) {
         this.broadcaster = changes.broadcaster.newValue;
       }
-    })
+    });
   }
 }
 </script>

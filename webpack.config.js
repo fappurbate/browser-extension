@@ -32,14 +32,17 @@ module.exports = [
       ])
     ]
   },
-  {
+  ...[
+    'gtranslate',
+    'translator'
+  ].map(contentScript => ({
     entry: [
-      './src/content/translator/index.js',
-      './src/content/translator/index.css'
+      `./src/content/${contentScript}/index.js`,
+      `./src/content/${contentScript}/index.css`
     ],
     output: {
       path: path.join(__dirname, 'dist', 'content'),
-      filename: 'translator.js'
+      filename: `${contentScript}.js`
     },
     module: {
       rules: [
@@ -62,7 +65,7 @@ module.exports = [
             {
               loader: 'file-loader',
               options: {
-                name: 'translator.css'
+                name: `${contentScript}.css`
               }
             },
             { loader: 'extract-loader' },
@@ -71,7 +74,7 @@ module.exports = [
         }
       ]
     }
-  },
+  })),
   {
     entry: [
       './src/popup/index.js',

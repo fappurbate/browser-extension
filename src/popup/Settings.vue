@@ -24,7 +24,7 @@ export default {
       if (changes.backend) {
         this.backend = changes.backend.newValue;
       }
-    })
+    });
   },
   methods: {
     onBackendChange() {
