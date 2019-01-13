@@ -30,7 +30,8 @@ module.exports = [
         { from: 'src/manifest.json', to: './' },
         { from: 'assets/', to: './assets/' }
       ])
-    ]
+    ],
+    devtool: 'source-map'
   },
   ...[
     'gtranslate',
