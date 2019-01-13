@@ -15,8 +15,20 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 const source = document.querySelector('textarea#source');
+const clearSourceButton = document.querySelector('.clear');
 const moreFrom = document.querySelector('.sl-more');
 const moreTo = document.querySelector('.tl-more');
+
+function clearSource() {
+  const events = [
+    document.createEvent('MouseEvents'),
+    document.createEvent('MouseEvents')
+  ];
+  events[0].initEvent('mousedown');
+  events[1].initEvent('mouseup');
+
+  events.forEach(event => clearSourceButton.dispatchEvent(event));
+}
 
 function setLanguageFrom(language) {
   const button = document.querySelector(`.language_list_sl_list .language_list_item_wrapper-${language}`);
@@ -38,13 +50,18 @@ async function translate(text, from, to) {
   setLanguageFrom(from);
   setLanguageTo(to);
 
-  source.value = text;
+  if (source.value === text) {
+    clearSource();
+  }
 
   const result = await new Promise(resolve => {
-    resolveTranslation = result => {
-      resolve(result);
-      resolveTranslation = null;
-    };
+    setTimeout(() => {
+      source.value = text;
+      resolveTranslation = result => {
+        resolve(result);
+        resolveTranslation = null;
+      };
+    }, 300);
   });
 
   return result;
