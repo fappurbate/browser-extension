@@ -176,20 +176,26 @@ function onTip(tipper, amount) {
 }
 
 async function onRequestTranslation(translator, tabId, msgId, content) {
-  console.log(`Request translation from ${translator} (${tabId}, ${msgId}): ${content}`);
+  console.log(`Request translation to ${translator} (${tabId}, ${msgId}): ${content}`);
 
   if (translator === 'operator') {
     WS.sendTranslationRequest(tabId, msgId, content);
   } else if (translator === 'gtranslate') {
-    const translation = await GTranslate.translate(content);
+    const sendTranslation = translation => {
+      const port = ports[tabId];
+      if (port) {
+        port.postMessage({
+          type: 'translation',
+          data: { msgId, content: translation }
+        });
+      }
+    };
 
-    const port = ports[tabId];
-    if (port) {
-      console.log(translation);
-      port.postMessage({
-        type: 'translation',
-        data: { msgId, content: translation }
-      });
+    try {
+      const translation = await GTranslate.translate(content);
+      sendTranslation(translation);
+    } catch (error) {
+      sendTranslation(`Error: ${error}`);
     }
   }
 }

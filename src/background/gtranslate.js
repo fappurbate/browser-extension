@@ -1,5 +1,6 @@
 const ports = {};
 const queue = [];
+let translating = false;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -9,6 +10,20 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+async function translateQueue() {
+  while (queue.length > 0) {
+    const request = queue[0];
+
+    const port = getSomePort();
+    if (!port) { break; }
+
+    const translation = await requestTranslation(port, request.content);
+    request.sendResult(translation);
+
+    queue.shift();
+  }
+}
+
 function onPortsChange() {
   if (Object.keys(ports).length === 0) {
     chrome.storage.local.set({
@@ -17,13 +32,7 @@ function onPortsChange() {
   } else {
     chrome.storage.local.set({
       gTranslateConnected: true
-    }, async () => {
-      for (const request of queue) {
-        const translation = await requestTranslation(getSomePort(), request.content);
-        request.sendResult(translation);
-      }
-      queue = [];
-    });
+    }, () => translateQueue());
   }
 }
 
@@ -55,7 +64,9 @@ function getSomePort() {
 }
 
 function requestTranslation(port, content) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
+    translating = true;
+
     chrome.tabs.sendMessage(port.sender.tab.id, {
       type: 'request-translation',
       data: {
@@ -63,12 +74,22 @@ function requestTranslation(port, content) {
         from: 'en',
         to: 'ru'
       }
-    }, response => resolve(response.translation));
+    }, response => {
+      translating = false;
+
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(response.translation);
+      }
+
+      translateQueue();
+    });
   });
 }
 
 export function translate(content) {
-  if (Object.keys(ports).length === 0) {
+  if (translating || Object.keys(ports).length === 0) {
     return new Promise(resolve => queue.push({
       content,
       sendResult: resolve
