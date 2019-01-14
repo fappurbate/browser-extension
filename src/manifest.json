@@ -28,6 +28,12 @@
       "run_at": "document_end"
     },
     {
+      "matches": ["https://*.chaturbate.com/p/*"],
+      "css": ["content/profile.css"],
+      "js": ["content/profile.js"],
+      "run_at": "document_end"
+    },
+    {
       "matches": ["https://translate.google.com/*", "https://translate.google.ru/*"],
       "css": ["content/gtranslate.css"],
       "js": ["content/gtranslate.js"],
