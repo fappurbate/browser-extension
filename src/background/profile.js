@@ -28,10 +28,17 @@ function onEnterProfile(tabId) {
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'profile') { return; }
 
-  const regexResult = /chaturbate.com\/(.*?)\//.exec(port.sender.url);
-  if (!regexResult) { return; }
+  const broadcaster = (() => {
+    const regexResult = /chaturbate.com\/p\/(.*?)\//.exec(port.sender.url);
+    if (!regexResult) {
+      const regexResult = /chaturbate.com\/(.*?)\//.exec(port.sender.url);
+      if (!regexResult) { return null; }
 
-  const broadcaster = regexResult[1];
+      return regexResult[1];
+    }
+
+    return regexResult[1];
+  })();
 
   const profile = profileByTabId[port.sender.tab.id] = {
     extractingAccountActivity: false,
@@ -49,7 +56,7 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    if (msg.type === 'account-activity') {
+    if (msg.subject === 'account-activity') {
       const item = msg.data;
 
       if (item.type === 'tip') {
@@ -57,12 +64,12 @@ chrome.runtime.onConnect.addListener(port => {
 
         WS.sendTip(broadcaster, tipper, amount);
       }
-    } else if (msg.type === 'on-start-extract-account-activity') {
+    } else if (msg.subject === 'on-start-extract-account-activity') {
       profile.extractingAccountActivity = true;
       chrome.storage.local.set({
         currentProfileExtractingAccountActivity: true
       });
-    } else if (msg.type === 'on-stop-extract-account-activity') {
+    } else if (msg.subject === 'on-stop-extract-account-activity') {
       profile.extractingAccountActivity = false;
       chrome.storage.local.set({
         currentProfileExtractingAccountActivity: false

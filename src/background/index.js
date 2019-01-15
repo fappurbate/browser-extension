@@ -143,18 +143,18 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    if (msg.type === 'request-translation') {
+    if (msg.subject === 'request-translation') {
       const { translator, msgId, content } = msg.data;
       onRequestTranslation(translator, port.sender.tab.id, msgId, content);
-    } else if (msg.type === 'request-cancel-translation') {
+    } else if (msg.subject === 'request-cancel-translation') {
       const { msgId } = msg.data;
       onRequestCancelTranslation(port.sender.tab.id, msgId);
     }
   });
 });
 
-WS.addHandler('translation', data => {
-  const { tabId, msgId, content } = data;
+WS.events.addEventListener('translation', event => {
+  const { tabId, msgId, content } = event.detail;
 
   const port = ports[tabId];
   if (!port) {
@@ -163,7 +163,7 @@ WS.addHandler('translation', data => {
   }
 
   port.postMessage({
-    type: 'translation',
+    subject: 'translation',
     data: { msgId, content }
   });
 });
@@ -186,7 +186,7 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
       const port = ports[tabId];
       if (port) {
         port.postMessage({
-          type: 'translation',
+          subject: 'translation',
           data: { msgId, content: translation }
         });
       }

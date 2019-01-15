@@ -3,7 +3,7 @@ import 'babel-polyfill';
 const port = chrome.runtime.connect({ name: 'gtranslate' });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'request-translation') {
+  if (msg.subject === 'request-translation') {
     const { content, from, to } = msg.data;
 
     translate(content, from, to).then(translation =>

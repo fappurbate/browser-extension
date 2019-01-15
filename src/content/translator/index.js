@@ -10,7 +10,7 @@ const HOLD_DURATION = 500;
 
 const port = chrome.runtime.connect({ name: 'translator' });
 port.onMessage.addListener(msg => {
-  if (msg.type === 'translation') {
+  if (msg.subject === 'translation') {
     const { msgId, content } = msg.data;
 
     const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
@@ -129,14 +129,14 @@ if (chatBox) {
 
   function requestTranslation(translator, msgId, content) {
     port.postMessage({
-      type: 'request-translation',
+      subject: 'request-translation',
       data: { translator, msgId, content }
     });
   }
 
   function requestCancelTranslation(msgId) {
     port.postMessage({
-      type: 'request-cancel-translation',
+      subject: 'request-cancel-translation',
       data: { msgId }
     });
   }

@@ -36,7 +36,7 @@ export default {
   methods: {
     startExtractAccountActivity() {
       chrome.tabs.sendMessage(this.tabId, {
-        type: 'start-extract-account-activity'
+        subject: 'start-extract-account-activity'
       }, response => {
         if (response.error) {
           this.error = response.error;
@@ -47,7 +47,7 @@ export default {
     },
     stopExtractAccountActivity() {
       chrome.tabs.sendMessage(this.tabId, {
-        type: 'stop-extract-account-activity'
+        subject: 'stop-extract-account-activity'
       }, response => {
         // ...
       });

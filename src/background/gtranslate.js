@@ -68,7 +68,7 @@ function requestTranslation(port, content) {
     translating = true;
 
     chrome.tabs.sendMessage(port.sender.tab.id, {
-      type: 'request-translation',
+      subject: 'request-translation',
       data: {
         content,
         from: 'en',
@@ -79,6 +79,8 @@ function requestTranslation(port, content) {
 
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
+      } else if (response.error) {
+        reject(response.error);
       } else {
         resolve(response.data);
       }

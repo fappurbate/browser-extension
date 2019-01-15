@@ -1,17 +1,17 @@
 import port from './port';
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.type === 'start-extract-account-activity') {
+  if (msg.subject === 'start-extract-account-activity') {
     try {
       startExtract();
-      port.postMessage({ type: 'on-start-extract-account-activity' });
+      port.postMessage({ subject: 'on-start-extract-account-activity' });
       sendResponse({});
     } catch (error) {
       sendResponse({ error: error.message });
     }
-  } else if (msg.type === 'stop-extract-account-activity') {
+  } else if (msg.subject === 'stop-extract-account-activity') {
     stopExtract();
-    port.postMessage({ type: 'on-stop-extract-account-activity' });
+    port.postMessage({ subject: 'on-stop-extract-account-activity' });
     sendResponse({});
   }
 });
@@ -65,7 +65,7 @@ function parseRow(node) {
 
 function sendItem(item) {
   port.postMessage({
-    type: 'account-activity',
+    subject: 'account-activity',
     data: item
   });
 }

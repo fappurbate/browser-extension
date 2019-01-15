@@ -3,11 +3,8 @@ const RECONNECT_INTERVAL = 2000;
 const queue = [];
 
 let ws = null;
-let wsHandlers = {};
 
-export function addHandler(type, handler) {
-  wsHandlers[type] = handler;
-}
+export const events = new EventTarget;
 
 function sendMessage(msg) {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -39,10 +36,16 @@ function connect() {
     });
 
     ws.addEventListener('message', event => {
-      const { type, data } = JSON.parse(event.data);
+      const msg = JSON.parse(event.data);
 
-      const handler = wsHandlers[type];
-      handler && handler(data);
+      if (msg.type === 'event') {
+        const { subject, data } = msg;
+        events.dispatchEvent(new CustomEvent(subject, { detail: data }));
+      } else if (msg.type === 'request') {
+        // TODO ...
+      } else if (msg.type === 'response') {
+        // TODO ...
+      }
     });
   });
 }
@@ -67,7 +70,8 @@ chrome.storage.local.get(['backend'], ({ backend }) => {
 
 export function sendTip(broadcaster, tipper, amount) {
   const msg = {
-    type: 'tip',
+    type: 'event',
+    subject: 'tip',
     data: { broadcaster, tipper, amount }
   };
 
@@ -76,7 +80,8 @@ export function sendTip(broadcaster, tipper, amount) {
 
 export function sendTranslationRequest(tabId, msgId, content) {
   const msg = {
-    type: 'request-translation',
+    type: 'event',
+    subject: 'request-translation',
     data: {
       tabId,
       msgId,
@@ -89,7 +94,8 @@ export function sendTranslationRequest(tabId, msgId, content) {
 
 export function sendCancelTranslationRequest(tabId, msgId) {
   const msg = {
-    type: 'request-cancel-translation',
+    type: 'event',
+    subject: 'request-cancel-translation',
     data: { tabId, msgId }
   };
 
