@@ -1,7 +1,7 @@
 <template>
   <div>
     <div id="status">
-      Profile:
+      Chaturbate:
       <span id="open" v-if="tabId">open</span>
       <span id="closed" v-else>closed</span>
     </div>
@@ -20,17 +20,17 @@ export default {
     tabId: null
   }),
   created () {
-    chrome.storage.local.get(['currentProfileTabId'], ({
-      currentProfileTabId
+    chrome.storage.local.get(['cbActiveTabId'], ({
+      cbActiveTabId
     }) => {
-      this.tabId = currentProfileTabId;
+      this.tabId = cbActiveTabId;
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace !== 'local') { return; }
 
-      if (changes.currentProfileTabId) {
-        this.tabId = changes.currentProfileTabId.newValue;
+      if (changes.cbActiveTabId) {
+        this.tabId = changes.cbActiveTabId.newValue;
       }
     });
   }

@@ -19,17 +19,17 @@ export default {
     error: null
   }),
   created () {
-    chrome.storage.local.get(['currentProfileExtractingAccountActivity'], ({
-      currentProfileExtractingAccountActivity
+    chrome.storage.local.get(['cbActiveTabExtractingAccountActivity'], ({
+      cbActiveTabExtractingAccountActivity
     }) => {
-      this.extracting = currentProfileExtractingAccountActivity;
+      this.extracting = cbActiveTabExtractingAccountActivity;
     });
 
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace !== 'local') { return; }
 
-      if (changes.currentProfileExtractingAccountActivity) {
-        this.extracting = changes.currentProfileExtractingAccountActivity.newValue;
+      if (changes.cbActiveTabExtractingAccountActivity) {
+        this.extracting = changes.cbActiveTabExtractingAccountActivity.newValue;
       }
     });
   },

@@ -1,32 +1,32 @@
 import * as WS from './ws';
 
-const profileByTabId = {};
+const cbByTabId = {};
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
-    currentProfileTabId: null,
-    currentProfileExtractingAccountActivity: false
+    cbActiveTabId: null,
+    cbActiveTabExtractingAccountActivity: false
   }, () => {
     // ...
   });
 });
 
-function onLeaveProfile() {
+function onLeaveCB() {
   return new Promise(resolve => chrome.storage.local.set({
-    currentProfileTabId: null,
-    currentProfileExtractingAccountActivity: false
+    cbActiveTabId: null,
+    cbActiveTabExtractingAccountActivity: false
   }, resolve));
 }
 
-function onEnterProfile(tabId) {
+function onEnterCB(tabId) {
   return new Promise(resolve => chrome.storage.local.set({
-    currentProfileTabId: tabId,
-    currentProfileExtractingAccountActivity: profileByTabId[tabId].extractingAccountActivity
+    cbActiveTabId: tabId,
+    cbActiveTabExtractingAccountActivity: cbByTabId[tabId].extractingAccountActivity
   }, resolve));
 }
 
 chrome.runtime.onConnect.addListener(port => {
-  if (port.name !== 'profile') { return; }
+  if (port.name !== 'chaturbate') { return; }
 
   const broadcaster = (() => {
     const regexResult = /chaturbate.com\/p\/(.*?)\//.exec(port.sender.url);
@@ -40,17 +40,17 @@ chrome.runtime.onConnect.addListener(port => {
     return regexResult[1];
   })();
 
-  const profile = profileByTabId[port.sender.tab.id] = {
+  const chaturbate = cbByTabId[port.sender.tab.id] = {
     extractingAccountActivity: false,
     port
   };
 
   port.onDisconnect.addListener(async () => {
-    delete profileByTabId[port];
+    delete cbByTabId[port];
 
     chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
       if (port.sender.tab.id === tab.id) {
-        await onLeaveProfile();
+        await onLeaveCB();
       }
     });
   });
@@ -65,26 +65,26 @@ chrome.runtime.onConnect.addListener(port => {
         WS.sendTip(broadcaster, tipper, amount);
       }
     } else if (msg.subject === 'on-start-extract-account-activity') {
-      profile.extractingAccountActivity = true;
+      chaturbate.extractingAccountActivity = true;
       chrome.storage.local.set({
-        currentProfileExtractingAccountActivity: true
+        cbActiveTabExtractingAccountActivity: true
       });
     } else if (msg.subject === 'on-stop-extract-account-activity') {
-      profile.extractingAccountActivity = false;
+      chaturbate.extractingAccountActivity = false;
       chrome.storage.local.set({
-        currentProfileExtractingAccountActivity: false
+        cbActiveTabExtractingAccountActivity: false
       });
     }
   });
 
   chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
     if (port.sender.tab.id === tab.id) {
-      await onEnterProfile(tab.id);
+      await onEnterCB(tab.id);
     }
   });
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  await onLeaveProfile();
-  profileByTabId[tabId] && await onEnterProfile(tabId);
+  await onLeaveCB();
+  cbByTabId[tabId] && await onEnterCB(tabId);
 });

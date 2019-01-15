@@ -1,7 +1,7 @@
 import 'babel-polyfill';
 import * as WS from './ws';
 import * as GTranslate from './gtranslate';
-import './profile';
+import './chaturbate';
 
 const ports = {};
 

@@ -35,7 +35,7 @@ module.exports = [
   },
   ...[
     'gtranslate',
-    'profile',
+    'chaturbate',
     'translator'
   ].map(contentScript => ({
     entry: [
