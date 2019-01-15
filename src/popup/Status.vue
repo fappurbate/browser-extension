@@ -10,12 +10,11 @@
 
 <script>
 export default {
-  name: 'status',
   data: () => ({
     activeTabId: null,
     broadcaster: null
   }),
-  created: function () {
+  created () {
     chrome.storage.local.get(['activeTabId', 'broadcaster'], ({
       activeTabId, broadcaster
     }) => {

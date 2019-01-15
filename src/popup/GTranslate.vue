@@ -14,11 +14,10 @@
 
 <script>
 export default {
-  name: 'g-translate',
   data: () => ({
     connected: false
   }),
-  created: function () {
+  created () {
     chrome.storage.local.get(['gTranslateConnected'], ({
       gTranslateConnected
     }) => {
@@ -32,7 +31,7 @@ export default {
         this.connected = changes.gTranslateConnected.newValue;
       }
     });
-  },
+  }
 }
 </script>
 

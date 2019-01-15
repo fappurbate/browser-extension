@@ -1,3 +1,5 @@
+import * as WS from './ws';
+
 const profileByTabId = {};
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -26,7 +28,7 @@ function onEnterProfile(tabId) {
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'profile') { return; }
 
-  const regexResult = /chaturbate.com\/p\/(.*?)\//.exec(port.sender.url);
+  const regexResult = /chaturbate.com\/(.*?)\//.exec(port.sender.url);
   if (!regexResult) { return; }
 
   const broadcaster = regexResult[1];
@@ -47,10 +49,24 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    if (msg.type === 'tip') {
-      const { tipper, amount } = msg.data;
+    if (msg.type === 'account-activity') {
+      const item = msg.data;
 
-      // ...
+      if (item.type === 'tip') {
+        const { tipper, amount } = item.data;
+
+        WS.sendTip(broadcaster, tipper, amount);
+      }
+    } else if (msg.type === 'on-start-extract-account-activity') {
+      profile.extractingAccountActivity = true;
+      chrome.storage.local.set({
+        currentProfileExtractingAccountActivity: true
+      });
+    } else if (msg.type === 'on-stop-extract-account-activity') {
+      profile.extractingAccountActivity = false;
+      chrome.storage.local.set({
+        currentProfileExtractingAccountActivity: false
+      });
     }
   });
 

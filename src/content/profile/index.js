@@ -1,1 +1,2 @@
-const port = chrome.runtime.connect({ name: 'profile' });
+import './port';
+import './account-activity';

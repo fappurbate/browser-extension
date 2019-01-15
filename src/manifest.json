@@ -28,7 +28,7 @@
       "run_at": "document_end"
     },
     {
-      "matches": ["https://*.chaturbate.com/p/*"],
+      "matches": ["https://*.chaturbate.com/*"],
       "css": ["content/profile.css"],
       "js": ["content/profile.js"],
       "run_at": "document_end"

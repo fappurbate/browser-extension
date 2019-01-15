@@ -7,11 +7,10 @@
 
 <script>
 export default {
-  name: 'settings',
   data: () => ({
     backend: ''
   }),
-  created: function () {
+  created () {
     chrome.storage.local.get(['backend'], ({
       backend
     }) => {

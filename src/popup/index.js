@@ -5,13 +5,13 @@ import './index.css';
 
 import Status from './Status.vue';
 import GTranslate from './GTranslate.vue';
-import AccountActivity from './AccountActivity.vue';
+import Profile from './Profile.vue';
 import Settings from './Settings.vue';
 
 new Vue({
   el: '#app',
   components: {
-    'account-activity': AccountActivity,
+    profile: Profile,
     status: Status,
     'g-translate': GTranslate,
     settings: Settings

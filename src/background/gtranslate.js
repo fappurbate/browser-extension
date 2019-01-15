@@ -80,7 +80,7 @@ function requestTranslation(port, content) {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
       } else {
-        resolve(response.translation);
+        resolve(response.data);
       }
 
       translateQueue();

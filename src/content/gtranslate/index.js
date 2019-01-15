@@ -7,7 +7,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const { content, from, to } = msg.data;
 
     translate(content, from, to).then(translation =>
-      sendResponse({ translation })
+      sendResponse({ data: translation })
     );
 
     return true;
