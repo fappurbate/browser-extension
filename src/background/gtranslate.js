@@ -37,7 +37,7 @@ function onPortsChange() {
 }
 
 chrome.runtime.onConnect.addListener(port => {
-  if (!/translate\.google\.com/.test(port.sender.url)) { return; }
+  if (port.name !== 'gtranslate') { return; }
 
   ports[port.sender.tab.id] = port;
 

@@ -8,7 +8,7 @@ import { onHold } from '../common/util';
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
 
-const port = chrome.runtime.connect();
+const port = chrome.runtime.connect({ name: 'translator' });
 port.onMessage.addListener(msg => {
   if (msg.type === 'translation') {
     const { msgId, content } = msg.data;

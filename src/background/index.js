@@ -134,7 +134,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 });
 
 chrome.runtime.onConnect.addListener(port => {
-  if (!/chaturbate\.com/.test(port.sender.url)) { return; }
+  if (port.name !== 'translator') { return; }
 
   ports[port.sender.tab.id] = port;
 

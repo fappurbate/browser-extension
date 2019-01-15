@@ -1,6 +1,6 @@
 import 'babel-polyfill';
 
-const port = chrome.runtime.connect();
+const port = chrome.runtime.connect({ name: 'gtranslate' });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'request-translation') {
