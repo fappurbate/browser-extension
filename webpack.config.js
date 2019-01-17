@@ -35,8 +35,7 @@ module.exports = [
   },
   ...[
     'gtranslate',
-    'chaturbate',
-    'translator'
+    'chaturbate'
   ].map(contentScript => ({
     entry: [
       `./src/content/${contentScript}/index.js`,

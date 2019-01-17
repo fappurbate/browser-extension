@@ -4,14 +4,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.subject === 'start-extract-account-activity') {
     try {
       startExtract();
-      port.postMessage({ subject: 'on-start-extract-account-activity' });
+      port.postMessage({ subject: 'extract-account-activity-start' });
       sendResponse({});
     } catch (error) {
       sendResponse({ error: error.message });
     }
   } else if (msg.subject === 'stop-extract-account-activity') {
     stopExtract();
-    port.postMessage({ subject: 'on-stop-extract-account-activity' });
+    port.postMessage({ subject: 'extract-account-activity-stop' });
     sendResponse({});
   }
 });

@@ -2,6 +2,7 @@ import 'babel-polyfill';
 import * as WS from './ws';
 import * as GTranslate from './gtranslate';
 import './chaturbate';
+import './account-activity';
 
 const ports = {};
 

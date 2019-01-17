@@ -1,5 +1,7 @@
 import * as WS from './ws';
 
+export const events = new EventTarget;
+
 const cbByTabId = {};
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -42,6 +44,7 @@ chrome.runtime.onConnect.addListener(port => {
 
   const chaturbate = cbByTabId[port.sender.tab.id] = {
     extractingAccountActivity: false,
+    broadcaster,
     port
   };
 
@@ -56,25 +59,13 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    if (msg.subject === 'account-activity') {
-      const item = msg.data;
-
-      if (item.type === 'tip') {
-        const { tipper, amount } = item.data;
-
-        WS.sendTip(broadcaster, tipper, amount);
+    const event = new CustomEvent(msg.subject, {
+      detail: {
+        data: msg.data,
+        chaturbate
       }
-    } else if (msg.subject === 'on-start-extract-account-activity') {
-      chaturbate.extractingAccountActivity = true;
-      chrome.storage.local.set({
-        cbActiveTabExtractingAccountActivity: true
-      });
-    } else if (msg.subject === 'on-stop-extract-account-activity') {
-      chaturbate.extractingAccountActivity = false;
-      chrome.storage.local.set({
-        cbActiveTabExtractingAccountActivity: false
-      });
-    }
+    });
+    events.dispatchEvent(event);
   });
 
   chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {

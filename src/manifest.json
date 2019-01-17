@@ -23,12 +23,6 @@
   "content_scripts": [
     {
       "matches": ["https://*.chaturbate.com/*"],
-      "css": ["content/translator.css"],
-      "js": ["content/translator.js"],
-      "run_at": "document_end"
-    },
-    {
-      "matches": ["https://*.chaturbate.com/*"],
       "css": ["content/chaturbate.css"],
       "js": ["content/chaturbate.js"],
       "run_at": "document_end"
