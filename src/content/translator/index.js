@@ -3,7 +3,7 @@ import 'babel-polyfill';
 import Drop from 'tether-drop';
 import Tether from 'tether';
 
-import { onHold } from '../common/util';
+import { onHold } from '../../common/util';
 
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;

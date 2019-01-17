@@ -1,10 +1,18 @@
+import RequestTarget from '../common/request-target';
+
 const RECONNECT_INTERVAL = 2000;
 
 const queue = [];
 
 let ws = null;
 
-export const events = new EventTarget;
+const eventHandlers = new EventTarget;
+export { eventHandlers as events };
+
+const requestHandlers = new RequestTarget;
+export { requestHandlers as requests };
+
+const requests = {};
 
 function sendMessage(msg) {
   if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -23,6 +31,28 @@ function connect() {
     console.log(`WS: (re)connecting to ${backend}.`);
     ws = new WebSocket(backend);
 
+    let nextRequestId = 0;
+    const requests = {};
+
+    ws.request = async function (subject, data) {
+      const requestId = nextRequestId++;
+      const msg = {
+        type: 'request',
+        requestId,
+        subject,
+        ...data && { data }
+      };
+
+      ws.send(JSON.stringify(msg));
+
+      return new Promise((resolve, reject) => {
+        requests[requestId] = {
+          succeed: resolve,
+          fail: reject
+        };
+      });
+    };
+
     ws.addEventListener('open', () => {
       console.log(`WS: connected to ${backend}.`);
 
@@ -31,20 +61,57 @@ function connect() {
     });
 
     ws.addEventListener('close', () => {
-      console.log(`WS: connected closed.`);
+      console.log(`WS: connection closed.`);
       setTimeout(connect, RECONNECT_INTERVAL);
     });
 
-    ws.addEventListener('message', event => {
+    ws.addEventListener('message', async event => {
       const msg = JSON.parse(event.data);
 
       if (msg.type === 'event') {
         const { subject, data } = msg;
-        events.dispatchEvent(new CustomEvent(subject, { detail: data }));
+        eventHandlers.dispatchEvent(new CustomEvent(subject, { detail: data }));
       } else if (msg.type === 'request') {
-        // TODO ...
+        const { subject, requestId, data } = msg;
+
+        try {
+          const result = await requestHandlers.request(subject, data);
+          const msg = {
+            type: 'response',
+            requestId,
+            ...result && { data: result }
+          };
+
+          ws.send(JSON.stringify(msg));
+        } catch (error) {
+          const msg = {
+            type: 'response',
+            requestId,
+            error: error.message,
+            ...error.data && { data: error.data }
+          };
+
+          ws.send(JSON.stringify(msg));
+        }
       } else if (msg.type === 'response') {
-        // TODO ...
+        const { subject, requestId } = msg;
+
+        const callbacks = requests[requestId];
+        if (!callbacks) {
+          console.warn(`Got response to unknown request: ${requestId}.`);
+          return;
+        } else {
+          delete requests[requestId];
+        }
+        const { succeed, fail } = callbacks;
+
+        if (msg.error) {
+          const { error, data } = msg;
+          fail(new CustomError(error, data));
+        } else {
+          const { data } = msg;
+          succeed(data);
+        }
       }
     });
   });
