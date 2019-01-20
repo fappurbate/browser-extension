@@ -7,6 +7,7 @@ import { onHold } from '../../common/util';
 
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
+const HIGHLIGHT_RECENT_TRANSLATION_DURATION = 2000;
 
 const port = chrome.runtime.connect({ name: 'translator' });
 port.onMessage.addListener(msg => {
@@ -15,11 +16,18 @@ port.onMessage.addListener(msg => {
 
     const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
     msgNode.setAttribute('data-msg-state', 'translated');
+    msgNode.classList.add('recent');
 
     const translationNode = document.createElement('div');
     translationNode.classList.add('translation');
+    translationNode.classList.add('recent');
     translationNode.innerText = content;
     msgNode.parentNode.insertBefore(translationNode, msgNode.nextSibling);
+
+    setTimeout(() => {
+      msgNode.classList.remove('recent');
+      translationNode.classList.remove('recent');
+    }, HIGHLIGHT_RECENT_TRANSLATION_DURATION);
   }
 });
 
