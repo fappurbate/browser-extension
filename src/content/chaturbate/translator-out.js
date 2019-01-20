@@ -1,3 +1,5 @@
+import { onKeyPress } from '../../common/util';
+
 const chatList = document.querySelector('.chat-list');
 const usersList = document.querySelector('.users-list');
 const chatHolder = document.querySelector('.chat-holder');
@@ -9,14 +11,38 @@ function getChatLeftMargin() {
 }
 
 if (chatList) {
-  // First form
   const chatForm = document.querySelector('.chat-form');
   const input = chatForm.querySelector('.text');
   const sendMessageButton = chatForm.querySelector('.send_message_button');
 
-  // Separator
-
   const container = document.createElement('div');
+
+  const chatForm2 = chatForm.cloneNode({ deep: true });
+  const emoticonButton2 = chatForm2.querySelector('.emoticon_button');
+  const input2 = chatForm2.querySelector('.text');
+  const sendMessageButton2 = chatForm2.querySelector('.send_message_button');
+
+  const chatForm3 = chatForm.cloneNode({ deep: true });
+  const emoticonButton3 = chatForm3.querySelector('.emoticon_button');
+  const input3 = chatForm3.querySelector('.text');
+  const sendMessageButton3 = chatForm3.querySelector('.send_message_button');
+
+  // First form
+
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      setTimeout(() => input.focus());
+    }
+  });
+
+  input.addEventListener('keyup', event => {
+    if (event.key === 'Tab') {
+      !event.shiftKey && input2.focus();
+    }
+  });
+
+  // Container
+
   container.style.backgroundColor = 'white';
   container.style.padding = '5px 0';
   container.style.marginLeft = getChatLeftMargin();
@@ -24,17 +50,18 @@ if (chatList) {
 
   // Second form
 
-  const chatForm2 = chatForm.cloneNode({ deep: true });
-  const emoticonButton2 = chatForm2.querySelector('.emoticon_button');
-  const input2 = chatForm2.querySelector('.text');
-  const sendMessageButton2 = chatForm2.querySelector('.send_message_button');
-
-  input2.addEventListener('keypress', event => {
+  input2.addEventListener('keydown', event => {
   	if (event.key === 'Enter') {
   	  event.preventDefault();
 
   	  sendMessageButton2.click();
-  	}
+    }
+  });
+
+  input2.addEventListener('keyup', event => {
+  	if (event.key === 'Tab') {
+      (event.shiftKey ? input : input3).focus();
+    }
   });
 
   sendMessageButton2.innerText = 'TRANSLATE';
@@ -65,16 +92,17 @@ if (chatList) {
 
   // Third form
 
-  const chatForm3 = chatForm.cloneNode({ deep: true });
-  const emoticonButton3 = chatForm3.querySelector('.emoticon_button');
-  const input3 = chatForm3.querySelector('.text');
-  const sendMessageButton3 = chatForm3.querySelector('.send_message_button');
-
-  input3.addEventListener('keypress', event => {
+  input3.addEventListener('keydown', event => {
   	if (event.key === 'Enter') {
-  	  event.preventDefault();
+      event.preventDefault();
 
   	  sendMessageButton3.click();
+    }
+  });
+
+  input3.addEventListener('keyup', event => {
+  	if (event.key === 'Tab') {
+      event.shiftKey && input2.focus();
   	}
   });
 

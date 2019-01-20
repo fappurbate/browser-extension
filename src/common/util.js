@@ -30,6 +30,25 @@ export function onHold(node, callback, options_ = {}) {
   }, false);
 }
 
+export function onKeyPress(node, callback) {
+  let wasDown = false;
+  let downEvent = null;
+
+  node.addEventListener('keydown', event => {
+    if (!wasDown) {
+      downEvent = event;
+      wasDown = true;
+    }
+  });
+
+  node.addEventListener('keyup', event => {
+    if (wasDown) {
+      callback(downEvent, event);
+      wasDown = false;
+    }
+  });
+}
+
 export function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }

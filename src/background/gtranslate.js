@@ -17,8 +17,6 @@ chrome.runtime.onInstalled.addListener(() => {
 async function translateQueue() {
   if (translating) { return; }
 
-  console.log('translateQueue', queue.slice(), translating);
-
   while (queue.length > 0) {
     const request = queue[0];
 
@@ -33,7 +31,6 @@ async function translateQueue() {
     }
 
     queue.shift();
-    console.log('queue.shift', queue.slice(), translating);
 
     await delay(300);
   }
@@ -131,8 +128,6 @@ export function translate(content, from = 'en', to = 'ru') {
       to,
       sendResult: resolve
     });
-    //remove
-    console.log('queue.push', queue.slice(), translating);
 
     translateQueue();
   });
