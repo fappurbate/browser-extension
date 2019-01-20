@@ -7,7 +7,7 @@
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://unpkg.com; object-src 'self'",
   "background": {
-  	"scripts": ["background.js"],
+    "page": "background.html",
   	"persistent": true
   },
   "browser_action": {

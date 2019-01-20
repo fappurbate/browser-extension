@@ -1,6 +1,22 @@
 import * as CB from './chaturbate';
 import * as WS from './ws';
 
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.set({ cbActiveTabExtractingAccountActivity: false }, () => {
+    // ...
+  });
+});
+
+CB.events.addEventListener('enterPage', event => {
+  const { chaturbate } = event.detail;
+
+  chrome.storage.local.set({
+    cbActiveTabExtractingAccountActivity: chaturbate.extractingAccountActivity
+  }, () => {
+    // ...
+  });
+});
+
 CB.events.addEventListener('account-activity', event => {
   const { data: item, chaturbate } = event.detail;
   const { broadcaster } = chaturbate;

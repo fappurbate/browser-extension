@@ -4,7 +4,10 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = [
   {
-    entry: './src/background/index.js',
+    entry: [
+      './src/background/index.js',
+      './src/background/index.html'
+    ],
     output: {
       path: path.join(__dirname, 'dist'),
       filename: 'background.js'
@@ -22,7 +25,20 @@ module.exports = [
               }
             }
           ]
-        }
+        },
+        {
+          test: /\.html$/,
+          use: [
+            {
+              loader: 'file-loader',
+              options: {
+                name: 'background.html'
+              }
+            },
+            { loader: 'extract-loader' },
+            { loader: 'html-loader' }
+          ]
+        },
       ]
     },
     plugins: [
@@ -74,7 +90,8 @@ module.exports = [
           ]
         }
       ]
-    }
+    },
+    devtool: 'source-map'
   })),
   {
     entry: [
@@ -133,6 +150,7 @@ module.exports = [
     },
     plugins: [
       new VueLoaderPlugin()
-    ]
+    ],
+    devtool: 'source-map'
   }
 ].map(conf => ({ ...conf, mode: 'development' }));

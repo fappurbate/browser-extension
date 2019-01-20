@@ -5,27 +5,24 @@ export const events = new EventTarget;
 const cbByTabId = {};
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    cbActiveTabId: null,
-    cbActiveTabExtractingAccountActivity: false
-  }, () => {
+  chrome.storage.local.set({ cbActiveTabId: null }, () => {
     // ...
   });
 });
 
-function onLeaveCB() {
-  return new Promise(resolve => chrome.storage.local.set({
-    cbActiveTabId: null,
-    cbActiveTabExtractingAccountActivity: false
-  }, resolve));
-}
+events.addEventListener('leavePage', () => {
+  chrome.storage.local.set({ cbActiveTabId: null }, () => {
+    // ...
+  });
+});
 
-function onEnterCB(tabId) {
-  return new Promise(resolve => chrome.storage.local.set({
-    cbActiveTabId: tabId,
-    cbActiveTabExtractingAccountActivity: cbByTabId[tabId].extractingAccountActivity
-  }, resolve));
-}
+events.addEventListener('enterPage', event => {
+  const { data: tabId } = event.detail;
+
+  chrome.storage.local.set({ cbActiveTabId: tabId }, () => {
+    // ...
+  });
+});
 
 chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'chaturbate') { return; }
@@ -53,7 +50,7 @@ chrome.runtime.onConnect.addListener(port => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
       if (port.sender.tab.id === tab.id) {
-        await onLeaveCB();
+        events.dispatchEvent(new CustomEvent('leavePage'));
       }
     });
   });
@@ -69,13 +66,29 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
+    if (!tab) { return; }
+
     if (port.sender.tab.id === tab.id) {
-      await onEnterCB(tab.id);
+      events.dispatchEvent(new CustomEvent('enterPage', {
+        detail: {
+          data: tab.id,
+          chaturbate
+        }
+      }));
     }
   });
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  await onLeaveCB();
-  cbByTabId[tabId] && await onEnterCB(tabId);
+  events.dispatchEvent(new CustomEvent('leavePage'));
+
+  const chaturbate = cbByTabId[tabId];
+  if (chaturbate) {
+    events.dispatchEvent(new CustomEvent('enterPage', {
+      detail: {
+        data: tabId,
+        chaturbate
+      }
+    }));
+  }
 });

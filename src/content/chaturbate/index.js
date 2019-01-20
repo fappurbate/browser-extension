@@ -1,3 +1,4 @@
 import './port';
 import './account-activity';
-import './translator.js';
+import './translator-in.js';
+import './translator-out.js';
