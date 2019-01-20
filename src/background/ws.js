@@ -118,7 +118,7 @@ function connect() {
 }
 
 function reconnect() {
-  if (ws && ws.readyState !== WebSocket.CLOSED || ws.readyState !== WebSocket.CLOSING) {
+  if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
     ws.close();
   }
   connect();
@@ -132,7 +132,9 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 });
 
 chrome.storage.local.get(['backend'], ({ backend }) => {
-  connect();
+  if (backend) {
+    connect();
+  }
 });
 
 export function sendTip(broadcaster, tipper, amount) {
