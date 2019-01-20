@@ -159,7 +159,7 @@ WS.events.addEventListener('translation', event => {
 
   const port = ports[tabId];
   if (!port) {
-    console.error('No port found!');
+    console.debug(`Got translation, but there's no port to send it to.`);
     return;
   }
 

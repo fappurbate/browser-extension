@@ -21,8 +21,16 @@ const moreFrom = document.querySelector('.sl-more');
 const moreTo = document.querySelector('.tl-more');
 const closeLanguageListButton = document.querySelector('.tlid-language-list-back-button')
 
+async function reset() {
+  let button = document.querySelector(`.language_list_item_wrapper-en`);
+  button.click();
+
+  clearSource();
+}
+
 function clearSource() {
   downThenUp(clearSourceButton);
+  source.value = '';
 }
 
 async function closeLanguageList() {
@@ -46,23 +54,19 @@ async function setLanguageTo(language) {
 let resolveTranslation = null;
 
 async function translate(text, from, to) {
-  await closeLanguageList();
+  await reset();
 
   await setLanguageFrom(from);
   await setLanguageTo(to);
 
-  if (source.value === text) {
-    clearSource();
-  }
-
   const result = await new Promise(async resolve => {
-    await delay(300);
+    await delay(1000);
 
-    source.value = text;
     resolveTranslation = result => {
       resolve(result);
       resolveTranslation = null;
     };
+    source.value = text;
   });
 
   return result;
@@ -78,7 +82,13 @@ const observer = new MutationObserver(mutations =>
     } else if (mutation.target.matches('.tlid-results-container')) {
       if (!throughTranslation) { return; }
 
-      const result = document.querySelector('.tlid-translation.translation').innerText;
+      const translationNode = document.querySelector('.tlid-translation.translation');
+      if (!translationNode) {
+        console.debug(`Strange, but there's no translation node .tlid-translation.translation.`);
+        return;
+      }
+
+      const result = translationNode.innerText;
       throughTranslation = false;
       if (resolveTranslation) {
         resolveTranslation(result);

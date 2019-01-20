@@ -29,3 +29,19 @@ export function onHold(node, callback, options_ = {}) {
     clearTimeout(timeoutId);
   }, false);
 }
+
+export function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function downThenUp(node) {
+  const down = document.createEvent('MouseEvents');
+  down.initEvent('mousedown');
+
+  const up = document.createEvent('MouseEvents');
+  up.initEvent('mouseup');
+
+  node.dispatchEvent(down);
+  await delay(100);
+  node.dispatchEvent(up);
+}
