@@ -24,10 +24,11 @@ async function translateQueue() {
     if (!port) { break; }
 
     try {
-      const translation = await requestTranslation(port, request.content, request.from, request.to);
-      request.sendResult(translation);
+      const result = await requestTranslation(port, request.content, request.from, request.to);
+      console.log('A',result);
+      request.sendResult(result);
     } catch (error) {
-      request.sendResult(`Error: ${error.message}.`);
+      request.sendResult({ translation: `Error: ${error.error}` });
     }
 
     queue.shift();
@@ -55,7 +56,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const { content, from, to } = msg.data;
 
     translate(content, from, to)
-    .then(translation => sendResponse({ data: translation }))
+    .then(data => sendResponse({ data }))
     .catch(error => sendResponse({ error: error.message, data: error.detail }));
 
     return true;
@@ -103,7 +104,7 @@ function requestTranslation(port, content, from, to) {
       data: { content, from, to }
     }, response => {
       if (timeoutId === null) {
-        reject('Timeout.');
+        reject({ error: 'Timeout.' });
       } else {
         clearTimeout(timeoutId);
         translating = false;
@@ -111,7 +112,7 @@ function requestTranslation(port, content, from, to) {
         if (chrome.runtime.lastError) {
           reject(chrome.runtime.lastError);
         } else if (response.error) {
-          reject(response.error);
+          reject(response);
         } else {
           resolve(response.data);
         }

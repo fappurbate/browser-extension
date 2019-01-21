@@ -27,6 +27,19 @@ if (chatList) {
   const input3 = chatForm3.querySelector('.text');
   const sendMessageButton3 = chatForm3.querySelector('.send_message_button');
 
+  const correctionContainer = document.createElement('div');
+  const correctionTitle = document.createElement('span');
+  const correction = document.createElement('span');
+
+  let onCorrectionClick = null;
+  correction.addEventListener('click', () => onCorrectionClick && onCorrectionClick());
+
+  function clearCorrection() {
+    correctionContainer.style.visibility = 'hidden';
+    onCorrectionClick = null;
+    correction.style.cursor = 'default';
+  }
+
   // First form
 
   input.addEventListener('keydown', event => {
@@ -83,7 +96,34 @@ if (chatList) {
       } else if (response.error) {
    	  	input3.value = `Error: ${response.error}.`;
    	  } else {
-   	  	input3.value = response.data;
+        const { translation, correction: correctionInfo } = response.data;
+
+   	  	input3.value = translation;
+        if (correctionInfo) {
+          if (correctionInfo.didYouMean) {
+            correctionTitle.innerText = 'Did you mean: ';
+            correction.style.cursor = 'pointer';
+            correction.innerText = correctionInfo.didYouMean;
+            correctionContainer.style.visibility = 'visible';
+
+            onCorrectionClick = () => {
+              input2.value = correctionInfo.didYouMean;
+              sendMessageButton2.click();
+            };
+          } else if (correctionInfo.showingTranslationFor) {
+            correctionTitle.innerText = 'Showing translation for: ';
+            correction.innerText = correctionInfo.showingTranslationFor;
+            correctionContainer.style.visibility = 'visible';
+          } else if (correctionInfo.translateFrom) {
+            correctionTitle.innerText = 'Translate from ';
+            correction.innerText = correctionInfo.translateFrom;
+            correctionContainer.style.visibility = 'visible';
+          } else {
+            clearCorrection();
+          }
+        } else {
+          clearCorrection();
+        }
    	  }
     });
   });
@@ -120,6 +160,19 @@ if (chatList) {
   });
 
   chatForm2.parentNode.insertBefore(chatForm3, chatForm2.nextSibling);
+
+  // Correction
+
+  correctionContainer.style.visibility = 'hidden';
+  correctionContainer.style.marginLeft = '5px';
+  correctionContainer.style.marginTop = '5px';
+  correctionContainer.style.marginBottom = '3px';
+  correctionContainer.style.fontSize = '9pt';
+  correction.style.fontWeight = 'bold';
+  correction.innerText = '';
+  correctionContainer.appendChild(correctionTitle);
+  correctionContainer.appendChild(correction);
+  chatForm3.parentNode.insertBefore(correctionContainer, chatForm3.nextSibling);
 
   // Update styles
 

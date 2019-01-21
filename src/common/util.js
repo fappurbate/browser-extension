@@ -50,7 +50,7 @@ export function onKeyPress(node, callback) {
 }
 
 export function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(() => resolve(), ms));
 }
 
 export async function downThenUp(node) {

@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const { content, from, to } = msg.data;
 
     translate(content, from, to)
-    .then(translation => sendResponse({ data: translation }))
+    .then(data => sendResponse({ data }))
     .catch(error => sendResponse({ error: error.message, data: error.detail }));
 
     return true;
@@ -52,6 +52,7 @@ async function setLanguageTo(language) {
 }
 
 let resolveTranslation = null;
+let resolveCorrection = null;
 
 async function translate(text, from, to) {
   await reset();
@@ -59,23 +60,37 @@ async function translate(text, from, to) {
   await setLanguageFrom(from);
   await setLanguageTo(to);
 
-  const result = await new Promise(async resolve => {
-    await delay(1000);
-
-    resolveTranslation = result => {
-      resolve(result);
+  const translationPromise = new Promise(async resolve => {
+    resolveTranslation = translation => {
       resolveTranslation = null;
+      resolve(translation);
     };
-    source.value = text;
   });
 
-  return result;
+  const correctionPromise = new Promise(resolve => {
+    resolveCorrection = correction => {
+      resolveCorrection = null;
+      resolve(correction);
+    }
+  });
+
+  await delay(1000);
+  source.value = text;
+
+  const waitForCorrection = delay(1000);
+  const translation = await translationPromise;
+  const correction = await Promise.race([correctionPromise, waitForCorrection]);
+
+  resolveTranslation = null;
+  resolveCorrection = null;
+
+  return { translation, correction };
 }
 
 const resultsContainer = document.querySelector('.results-container');
 let throughTranslation = false;
 
-const observer = new MutationObserver(mutations =>
+new MutationObserver(mutations =>
   mutations.forEach(mutation => {
     if (mutation.type === 'childList' && mutation.target.matches('.tlid-translation.translation')) {
       throughTranslation = true;
@@ -95,5 +110,41 @@ const observer = new MutationObserver(mutations =>
       }
     }
   })
-);
-observer.observe(resultsContainer, { subtree: true, childList: true, attributes: true });
+).observe(resultsContainer, {
+  subtree: true,
+  childList: true,
+  attributes: true,
+  attributeOldValue: true
+});
+
+const sourceWrap = document.querySelector('.source-wrap');
+
+new MutationObserver(mutations =>
+  mutations.forEach(mutation => {
+    if (mutation.type === 'attributes') {
+      if (mutation.target.id === 'spelling-correction' && mutation.attributeName === 'style'
+        && mutation.oldValue === 'display: none;') {
+          if (!resolveCorrection) { return; }
+
+          const node = mutation.target;
+
+          const firstMessage = node.firstChild.textContent;
+          if (firstMessage === 'Showing translation for ') {
+            const showingTranslationFor = node.querySelector('a').innerText;
+            const translateInstead = node.querySelector('.gt-revert-correct-message > a').innerText;
+            resolveCorrection({ showingTranslationFor, translateInstead });
+          } else if (firstMessage === 'Translate from: ') {
+            const translateFrom = node.querySelector('a').innerText;
+            resolveCorrection({ translateFrom });
+          } else if (firstMessage === 'Did you mean: ') {
+            const didYouMean = node.querySelector('a').innerText;
+            resolveCorrection({ didYouMean });
+          }
+      }
+    }
+  })
+).observe(sourceWrap, {
+  subtree: true,
+  attributes: true,
+  attributeOldValue: true
+});
