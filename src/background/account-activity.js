@@ -1,5 +1,5 @@
-import * as CB from './chaturbate';
-import * as WS from './ws';
+import * as CB from './common/chaturbate';
+import * as WS from './common/ws';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ cbActiveTabExtractingAccountActivity: false }, () => {

@@ -31,7 +31,7 @@ if (isActive()) {
               }));
             } else if (content.includes('tipped')) {
               const i1 = content.indexOf('tipped') + 'tipped '.length;
-              const i2 = content.indexOf(' tokens');
+              const i2 = content.indexOf(' token');
               const amount = Number(
                 content.substr(i1, i2 - i1 + 1)
               );
@@ -56,7 +56,7 @@ if (isActive()) {
             } else {
               eventHandlers.dispatchEvent(new CustomEvent('message', {
                 detail: {
-                  type: 'user-message',
+                  type: 'system-message',
                   data: { node, content }
                 }
               }));

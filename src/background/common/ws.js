@@ -1,4 +1,5 @@
-import RequestTarget from '../common/request-target';
+import RequestTarget from '../../common/request-target';
+import { CustomError } from './errors';
 
 const RECONNECT_INTERVAL = 2000;
 
@@ -12,17 +13,39 @@ export { eventHandlers as events };
 const requestHandlers = new RequestTarget;
 export { requestHandlers as requests };
 
-const requests = {};
-
 function sendMessage(msg) {
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    queue.push(msg);
-  } else {
+  queue.push(msg);
+  sendQueue();
+}
+
+function sendQueue() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
     queue.forEach(msg => ws.send(msg));
     queue.length = 0;
-    ws.send(msg);
   }
 }
+
+let nextRequestId = 0;
+const requests = {};
+
+async function request(subject, data) {
+  const requestId = nextRequestId++;
+  const msg = {
+    type: 'request',
+    requestId,
+    subject,
+    ...data && { data }
+  };
+
+  sendMessage(JSON.stringify(msg));
+
+  return new Promise((resolve, reject) => {
+    requests[requestId] = {
+      succeed: resolve,
+      fail: reject
+    };
+  });
+};
 
 function connect() {
   if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) { return; }
@@ -31,33 +54,9 @@ function connect() {
     console.log(`WS: (re)connecting to ${backend}.`);
     ws = new WebSocket(backend);
 
-    let nextRequestId = 0;
-    const requests = {};
-
-    ws.request = async function (subject, data) {
-      const requestId = nextRequestId++;
-      const msg = {
-        type: 'request',
-        requestId,
-        subject,
-        ...data && { data }
-      };
-
-      ws.send(JSON.stringify(msg));
-
-      return new Promise((resolve, reject) => {
-        requests[requestId] = {
-          succeed: resolve,
-          fail: reject
-        };
-      });
-    };
-
     ws.addEventListener('open', () => {
       console.log(`WS: connected to ${backend}.`);
-
-      queue.forEach(msg => ws.send(msg));
-      queue.length = 0;
+      sendQueue();
     });
 
     ws.addEventListener('close', () => {
@@ -82,7 +81,7 @@ function connect() {
             ...result && { data: result }
           };
 
-          ws.send(JSON.stringify(msg));
+          sendMessage(JSON.stringify(msg));
         } catch (error) {
           const msg = {
             type: 'response',
@@ -91,7 +90,7 @@ function connect() {
             ...error.data && { data: error.data }
           };
 
-          ws.send(JSON.stringify(msg));
+          sendMessage(JSON.stringify(msg));
         }
       } else if (msg.type === 'response') {
         const { subject, requestId } = msg;
@@ -136,6 +135,10 @@ chrome.storage.local.get(['backend'], ({ backend }) => {
     connect();
   }
 });
+
+export function requestTipperInfo(broadcaster, tipper) {
+  return request('tipper-info', { broadcaster, tipper });
+}
 
 export function sendTip(broadcaster, tipper, amount) {
   const msg = {

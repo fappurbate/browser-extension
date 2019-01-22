@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     translate(content, from, to)
     .then(data => sendResponse({ data }))
-    .catch(error => sendResponse({ error: error.message, data: error.detail }));
+    .catch(error => sendResponse({ error: error.message, data: error.data }));
 
     return true;
   }

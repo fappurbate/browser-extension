@@ -30,15 +30,15 @@ chrome.runtime.onConnect.addListener(port => {
   if (port.name !== 'chaturbate') { return; }
 
   const broadcaster = (() => {
-    const regexResult = /chaturbate.com\/p\/(.*?)\//.exec(port.sender.url);
+    const regexResult = /(testbed\.)?chaturbate.com\/(p|b)\/(.*?)\//.exec(port.sender.url);
     if (!regexResult) {
-      const regexResult = /chaturbate.com\/(.*?)\//.exec(port.sender.url);
+      const regexResult = /(testbed\.)?chaturbate.com\/(.*?)\//.exec(port.sender.url);
       if (!regexResult) { return null; }
 
-      return regexResult[1];
+      return regexResult[2];
     }
 
-    return regexResult[1];
+    return regexResult[3];
   })();
 
   const chaturbate = cbByTabId[port.sender.tab.id] = {

@@ -1,1 +1,1 @@
-export default chrome.runtime.connect({ name: 'chaturbate' });
+export default chrome.runtime.connect(undefined, { name: 'chaturbate' });

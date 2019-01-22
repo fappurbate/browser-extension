@@ -1,8 +1,9 @@
 import 'babel-polyfill';
-import * as WS from './ws';
+import * as WS from './common/ws';
+import * as CB from './common/chaturbate';
 import * as GTranslate from './gtranslate';
-import * as CB from './chaturbate';
 import './account-activity';
+import './tipper-info';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
