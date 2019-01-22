@@ -1,4 +1,4 @@
-import port from './port';
+import port from './common/port';
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.subject === 'start-extract-account-activity') {

@@ -4,7 +4,8 @@ import Drop from 'tether-drop';
 import Tether from 'tether';
 
 import { onHold } from '../../common/util';
-import port from './port';
+import port from './common/port';
+import * as Messages from './common/messages';
 
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
@@ -31,24 +32,19 @@ port.onMessage.addListener(msg => {
   }
 });
 
-const chatBox = document.querySelector('.chat-box');
-if (chatBox) {
+if (Messages.isActive()) {
   const messageById = {};
   const dropByMessage = {};
   let currMessageId = 0;
 
-  const observer = new MutationObserver(mutations =>
-    mutations.forEach(mutation =>
-      mutation.addedNodes.forEach(node => {
-        if (node.nodeType === Node.ELEMENT_NODE && node.matches('div.text')) {
-          node.setAttribute('title', 'Hold to open menu.');
-          node.setAttribute('data-msg-state', 'normal');
-          onHold(node, () => onMessageAction(node));
-        }
-      })
-    )
-  );
-  observer.observe(chatBox, { childList: true, subtree: true });
+  Messages.events.addEventListener('message', event => {
+    const { type, data } = event.detail;
+    const { node } = data;
+
+    node.setAttribute('title', 'Hold to open menu.');
+    node.setAttribute('data-msg-state', 'normal');
+    onHold(node, () => onMessageAction(node));
+  });
 
   const dropOverlay = document.createElement('div');
   dropOverlay.id = 'drop-overlay';

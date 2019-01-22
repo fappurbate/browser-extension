@@ -182,17 +182,10 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
   if (translator === 'operator') {
     WS.sendTranslationRequest(tabId, msgId, content);
   } else if (translator === 'gtranslate') {
-<<<<<<< HEAD
-    const sendTranslation = translation => {
+    const sendTranslation = ({ translation, correction }) => {
       const cb = CB.byTabId(tabId);
       if (cb) {
         cb.port.postMessage({
-=======
-    const sendTranslation = ({ translation, correction }) => {
-      const port = ports[tabId];
-      if (port) {
-        port.postMessage({
->>>>>>> origin/master
           subject: 'translation',
           data: { msgId, translation, correction  }
         });
