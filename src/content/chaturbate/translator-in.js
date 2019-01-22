@@ -4,12 +4,12 @@ import Drop from 'tether-drop';
 import Tether from 'tether';
 
 import { onHold } from '../../common/util';
+import port from './port';
 
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
 const HIGHLIGHT_RECENT_TRANSLATION_DURATION = 2000;
 
-const port = chrome.runtime.connect({ name: 'translator' });
 port.onMessage.addListener(msg => {
   if (msg.subject === 'translation') {
     const { msgId, content } = msg.data;

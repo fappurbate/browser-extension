@@ -3,6 +3,7 @@ import * as WS from './ws';
 export const events = new EventTarget;
 
 const cbByTabId = {};
+export const byTabId = tabId => cbByTabId[tabId];
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({ cbActiveTabId: null }, () => {
@@ -46,7 +47,7 @@ chrome.runtime.onConnect.addListener(port => {
   };
 
   port.onDisconnect.addListener(async () => {
-    delete cbByTabId[port];
+    delete cbByTabId[port.sender.tab.id];
 
     chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
       if (port.sender.tab.id === tab.id) {
@@ -56,10 +57,12 @@ chrome.runtime.onConnect.addListener(port => {
   });
 
   port.onMessage.addListener(msg => {
-    const event = new CustomEvent(msg.subject, {
+    const event = new CustomEvent('port-event', {
       detail: {
-        data: msg.data,
-        chaturbate
+        subject: msg.subject,
+        info: chaturbate,
+        port,
+        data: msg.data
       }
     });
     events.dispatchEvent(event);

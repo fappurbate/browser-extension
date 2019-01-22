@@ -1,7 +1,7 @@
 <template>
   <div>
     <span class="label">Backend</span>
-    <input v-model="backend" @change="onBackendChange()" type="text" />
+    <input v-model="backend" @change="onBackendChange" type="text" />
   </div>
 </template>
 
@@ -11,9 +11,7 @@ export default {
     backend: ''
   }),
   created () {
-    chrome.storage.local.get(['backend'], ({
-      backend
-    }) => {
+    chrome.storage.local.get(['backend'], ({ backend }) => {
       this.backend = backend;
     });
 
@@ -32,3 +30,6 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+</style>

@@ -1,10 +1,8 @@
 import 'babel-polyfill';
 import * as WS from './ws';
 import * as GTranslate from './gtranslate';
-import './chaturbate';
+import * as CB from './chaturbate';
 import './account-activity';
-
-const ports = {};
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -15,6 +13,13 @@ chrome.runtime.onInstalled.addListener(() => {
   }, () => {
     // ...
   });
+});
+
+const audio = document.createElement('audio');
+audio.setAttribute('src', '/assets/audio/private-show-end.ogg');
+
+window.addEventListener('load', () => {
+  document.body.appendChild(audio);
 });
 
 chrome.debugger.onEvent.addListener((source, method, params) => {
@@ -28,6 +33,8 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
         chrome.storage.local.set({ broadcaster: data.data.user }, () => {
           // ...
         });
+      } else if (data.method === 'leavePrivateRoom') {
+        audio.play();
       }
     }
   }
@@ -134,36 +141,28 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
-chrome.runtime.onConnect.addListener(port => {
-  if (port.name !== 'translator') { return; }
+CB.events.addEventListener('port-event', event => {
+  const { subject, info, port, data } = event.detail;
 
-  ports[port.sender.tab.id] = port;
-
-  port.onDisconnect.addListener(() => {
-    delete ports[port.sender.tab.id];
-  });
-
-  port.onMessage.addListener(msg => {
-    if (msg.subject === 'request-translation') {
-      const { translator, msgId, content } = msg.data;
-      onRequestTranslation(translator, port.sender.tab.id, msgId, content);
-    } else if (msg.subject === 'request-cancel-translation') {
-      const { msgId } = msg.data;
-      onRequestCancelTranslation(port.sender.tab.id, msgId);
-    }
-  });
+  if (subject === 'request-translation') {
+    const { translator, msgId, content } = data;
+    onRequestTranslation(translator, port.sender.tab.id, msgId, content);
+  } else if (subject === 'request-cancel-translation') {
+    const { msgId } = data;
+    onRequestCancelTranslation(port.sender.tab.id, msgId);
+  }
 });
 
 WS.events.addEventListener('translation', event => {
   const { tabId, msgId, content } = event.detail;
 
-  const port = ports[tabId];
-  if (!port) {
+  const cb = CB.byTabId(tabId);
+  if (!cb) {
     console.debug(`Got translation, but there's no port to send it to.`);
     return;
   }
 
-  port.postMessage({
+  cb.port.postMessage({
     subject: 'translation',
     data: { msgId, content }
   });
@@ -184,9 +183,9 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
     WS.sendTranslationRequest(tabId, msgId, content);
   } else if (translator === 'gtranslate') {
     const sendTranslation = translation => {
-      const port = ports[tabId];
-      if (port) {
-        port.postMessage({
+      const cb = CB.byTabId(tabId);
+      if (cb) {
+        cb.port.postMessage({
           subject: 'translation',
           data: { msgId, content: translation }
         });

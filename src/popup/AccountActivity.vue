@@ -2,10 +2,10 @@
   <div>
     <template v-if="extracting">
       Extracting account activity...
-      <a href="#" @click="stopExtractAccountActivity()">Stop</a>
+      <a href="#" @click="stopExtractAccountActivity">Stop</a>
     </template>
     <template v-else>
-      <a href="#" @click="startExtractAccountActivity()">Extract account activity</a>
+      <a href="#" @click="startExtractAccountActivity">Extract account activity</a>
     </template>
     <div v-if="error" id="error">{{ error }}</div>
   </div>
