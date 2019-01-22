@@ -1,6 +1,7 @@
 import * as WS from './ws';
 
-export const events = new EventTarget;
+const eventHandlers = new EventTarget;
+export { eventHandlers as events };
 
 const cbByTabId = {};
 export const byTabId = tabId => cbByTabId[tabId];
@@ -11,13 +12,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-events.addEventListener('leavePage', () => {
+eventHandlers.addEventListener('leavePage', () => {
   chrome.storage.local.set({ cbActiveTabId: null }, () => {
     // ...
   });
 });
 
-events.addEventListener('enterPage', event => {
+eventHandlers.addEventListener('enterPage', event => {
   const { data: tabId } = event.detail;
 
   chrome.storage.local.set({ cbActiveTabId: tabId }, () => {
@@ -51,7 +52,7 @@ chrome.runtime.onConnect.addListener(port => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
       if (port.sender.tab.id === tab.id) {
-        events.dispatchEvent(new CustomEvent('leavePage'));
+        eventHandlers.dispatchEvent(new CustomEvent('leavePage'));
       }
     });
   });
@@ -65,14 +66,14 @@ chrome.runtime.onConnect.addListener(port => {
         data: msg.data
       }
     });
-    events.dispatchEvent(event);
+    eventHandlers.dispatchEvent(event);
   });
 
   chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
     if (!tab) { return; }
 
     if (port.sender.tab.id === tab.id) {
-      events.dispatchEvent(new CustomEvent('enterPage', {
+      eventHandlers.dispatchEvent(new CustomEvent('enterPage', {
         detail: {
           data: tab.id,
           chaturbate
@@ -83,11 +84,11 @@ chrome.runtime.onConnect.addListener(port => {
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  events.dispatchEvent(new CustomEvent('leavePage'));
+  eventHandlers.dispatchEvent(new CustomEvent('leavePage'));
 
   const chaturbate = cbByTabId[tabId];
   if (chaturbate) {
-    events.dispatchEvent(new CustomEvent('enterPage', {
+    eventHandlers.dispatchEvent(new CustomEvent('enterPage', {
       detail: {
         data: tabId,
         chaturbate
