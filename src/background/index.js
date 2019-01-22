@@ -164,7 +164,7 @@ WS.events.addEventListener('translation', event => {
 
   cb.port.postMessage({
     subject: 'translation',
-    data: { msgId, content }
+    data: { msgId, translation: content }
   });
 });
 
@@ -182,21 +182,28 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
   if (translator === 'operator') {
     WS.sendTranslationRequest(tabId, msgId, content);
   } else if (translator === 'gtranslate') {
+<<<<<<< HEAD
     const sendTranslation = translation => {
       const cb = CB.byTabId(tabId);
       if (cb) {
         cb.port.postMessage({
+=======
+    const sendTranslation = ({ translation, correction }) => {
+      const port = ports[tabId];
+      if (port) {
+        port.postMessage({
+>>>>>>> origin/master
           subject: 'translation',
-          data: { msgId, content: translation }
+          data: { msgId, translation, correction  }
         });
       }
     };
 
     try {
-      const translation = await GTranslate.translate(content);
-      sendTranslation(translation);
+      const result = await GTranslate.translate(content);
+      sendTranslation(result);
     } catch (error) {
-      sendTranslation(`Error: ${error}`);
+      sendTranslation({ error: `Error: ${error}` });
     }
   }
 }

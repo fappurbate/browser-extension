@@ -12,7 +12,7 @@ const HIGHLIGHT_RECENT_TRANSLATION_DURATION = 2000;
 
 port.onMessage.addListener(msg => {
   if (msg.subject === 'translation') {
-    const { msgId, content } = msg.data;
+    const { msgId, translation, correction } = msg.data;
 
     const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
     msgNode.setAttribute('data-msg-state', 'translated');
@@ -21,7 +21,7 @@ port.onMessage.addListener(msg => {
     const translationNode = document.createElement('div');
     translationNode.classList.add('translation');
     translationNode.classList.add('recent');
-    translationNode.innerText = content;
+    translationNode.innerText = translation;
     msgNode.parentNode.insertBefore(translationNode, msgNode.nextSibling);
 
     setTimeout(() => {
