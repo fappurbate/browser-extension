@@ -8,8 +8,6 @@ export function isActive() {
 const eventHandlers = new EventTarget;
 export { eventHandlers as events };
 
-eventHandlers.addEventListener('message', ({ detail }) => {console.log(detail)})
-
 function handleMessageNode(node, pm = false) {
   const content = node.innerText;
   const usernameNode = node.querySelector('.username');
@@ -58,6 +56,13 @@ function handleMessageNode(node, pm = false) {
         detail: {
           type: 'leave',
           data: { node, pm, username, isBroadcaster }
+        }
+      }));
+    } else if (content.startsWith('New private conversation')) {
+      eventHandlers.dispatchEvent(new CustomEvent('message', {
+        detail: {
+          type: 'new-pm',
+          data: { node, username }
         }
       }));
     } else {
