@@ -63,6 +63,8 @@ if (chatList) {
 
   // Second form
 
+  input2.removeAttribute('id');
+
   input2.addEventListener('keydown', event => {
   	if (event.key === 'Enter') {
   	  event.preventDefault();
@@ -131,6 +133,8 @@ if (chatList) {
   container.insertBefore(chatForm2, null);
 
   // Third form
+
+  input3.removeAttribute('id');
 
   input3.addEventListener('keydown', event => {
   	if (event.key === 'Enter') {
