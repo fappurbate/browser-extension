@@ -42,6 +42,24 @@ if (isActive()) {
                   data: { node, username, amount }
                 }
               }));
+            } else if (content.includes('has joined')) {
+              const isBroadcaster = content.startsWith('Broadcaster');
+
+              eventHandlers.dispatchEvent(new CustomEvent('message', {
+                detail: {
+                  type: 'join',
+                  data: { node, username, isBroadcaster }
+                }
+              }));
+            } else if (content.includes('has left')) {
+              const isBroadcaster = content.startsWith('Broadcaster');
+
+              eventHandlers.dispatchEvent(new CustomEvent('message', {
+                detail: {
+                  type: 'leave',
+                  data: { node, username, isBroadcaster }
+                }
+              }));
             } else {
               console.debug(`Couldn't find out the message type: ${content}.`);
             }
@@ -51,6 +69,33 @@ if (isActive()) {
                 detail: {
                   type: 'notice',
                   data: { node, content }
+                }
+              }));
+            } else if (content.includes('start private show')) {
+              const i = content.indexOf(' wants');
+              const username = content.substr(0, i + 1);
+
+              eventHandlers.dispatchEvent(new CustomEvent('message', {
+                detail: {
+                  type: 'private-show-request',
+                  data: { node, username }
+                }
+              }));
+            } else if (content.startsWith('Private show has finished.')) {
+              eventHandlers.dispatchEvent(new CustomEvent('message', {
+                detail: {
+                  type: 'private-show-end',
+                  data: { node }
+                }
+              }));
+            } else if (content.startsWith('room subject changed')) {
+              const i = content.indexOf('"');
+              const subject = content.substr(i + 1, content.length - i - 1);
+
+              eventHandlers.dispatchEvent(new CustomEvent('message', {
+                detail: {
+                  type: 'subject-change',
+                  data: { node, subject }
                 }
               }));
             } else {
