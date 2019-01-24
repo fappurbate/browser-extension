@@ -7,7 +7,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-CB.events.addEventListener('enterPage', event => {
+CB.events.addEventListener('enter-page', event => {
   const { chaturbate } = event.detail;
 
   chrome.storage.local.set({

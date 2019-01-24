@@ -12,13 +12,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-eventHandlers.addEventListener('leavePage', () => {
+eventHandlers.addEventListener('leave-page', () => {
   chrome.storage.local.set({ cbActiveTabId: null }, () => {
     // ...
   });
 });
 
-eventHandlers.addEventListener('enterPage', event => {
+eventHandlers.addEventListener('enter-page', event => {
   const { data: tabId } = event.detail;
 
   chrome.storage.local.set({ cbActiveTabId: tabId }, () => {
@@ -52,7 +52,7 @@ chrome.runtime.onConnect.addListener(port => {
 
     chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
       if (port.sender.tab.id === tab.id) {
-        eventHandlers.dispatchEvent(new CustomEvent('leavePage'));
+        eventHandlers.dispatchEvent(new CustomEvent('laeve-page'));
       }
     });
   });
@@ -73,7 +73,7 @@ chrome.runtime.onConnect.addListener(port => {
     if (!tab) { return; }
 
     if (port.sender.tab.id === tab.id) {
-      eventHandlers.dispatchEvent(new CustomEvent('enterPage', {
+      eventHandlers.dispatchEvent(new CustomEvent('enter-page', {
         detail: {
           data: tab.id,
           chaturbate
@@ -84,11 +84,11 @@ chrome.runtime.onConnect.addListener(port => {
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  eventHandlers.dispatchEvent(new CustomEvent('leavePage'));
+  eventHandlers.dispatchEvent(new CustomEvent('leave-page'));
 
   const chaturbate = cbByTabId[tabId];
   if (chaturbate) {
-    eventHandlers.dispatchEvent(new CustomEvent('enterPage', {
+    eventHandlers.dispatchEvent(new CustomEvent('enter-page', {
       detail: {
         data: tabId,
         chaturbate

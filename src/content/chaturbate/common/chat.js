@@ -42,9 +42,7 @@ export function getBroadcaster() {
 Messages.events.addEventListener('message', event => {
   const { type, data } = event.detail;
 
-  if (type === 'system-message') {
-    if (data.content.startsWith('room subject changed to')) {
-      ready = true;
-    }
+  if (type === 'subject-change') {
+    ready = true;
   }
 });

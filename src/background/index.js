@@ -31,9 +31,9 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       const data = JSON.parse(JSON.parse(payload)[0]);
 
       if (data.method === 'connect') {
-        chrome.storage.local.set({ broadcaster: data.data.user }, () => {
+        // chrome.storage.local.set({ broadcaster: data.data.user }, () => {
           // ...
-        });
+        // });
       } else if (data.method === 'leavePrivateRoom') {
         audio.play();
       }
@@ -106,37 +106,37 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       console.log(`Chaturbate broadcast open at ${tab.url}`);
       chrome.storage.local.set({
         activeTabId: null,
-        broadcaster: null,
         oldSkipped: false
-      }, async () => {
-        // If the tab has changed
-        if (tabId !== activeTabId) {
-          const attach = () => new Promise(resolve => {
-            console.log(`Attaching debugger to the new broadcast page...`);
-            chrome.debugger.attach({ tabId }, '1.1', () => {
-              if (chrome.runtime.lastError) {
-                console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
-              } else {
-                chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-                chrome.storage.local.set({ activeTabId: tabId }, resolve);
-              }
-            });
-          });
-
-          if (activeTabId !== null) {
-            console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId: activeTabId }, async () => {
-              if (chrome.runtime.lastError) {
-                console.debug(`Couldn't detach debugger from tab ${activeTabId}: ${$chrome.runtime.lastError}.`);
-              }
-              await attach();
+      }, () => {
+        chrome.storage.local.set({ activeTabId: tabId }, async () => {
+          if (tabId !== activeTabId) { // If the tab has changed
+            const attach = () => new Promise(resolve => {
+              console.log(`Attaching debugger to the new broadcast page...`);
+              chrome.debugger.attach({ tabId }, '1.1', () => {
+                if (chrome.runtime.lastError) {
+                  console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
+                } else {
+                  chrome.debugger.sendCommand({ tabId }, 'Network.enable');
+                  resolve();
+                }
+              });
             });
 
-            return;
+            if (activeTabId !== null) {
+              console.log(`Detaching debugger from the old broadcast page...`);
+              chrome.debugger.detach({ tabId: activeTabId }, async () => {
+                if (chrome.runtime.lastError) {
+                  console.debug(`Couldn't detach debugger from tab ${activeTabId}: ${$chrome.runtime.lastError}.`);
+                }
+                await attach();
+              });
+
+              return;
+            }
+
+            await attach();
           }
-
-          await attach();
-        }
+        });
       });
     });
   }
@@ -152,6 +152,12 @@ CB.events.addEventListener('port-event', event => {
     const { msgId } = data;
     onRequestCancelTranslation(port.sender.tab.id, msgId);
   }
+});
+
+CB.events.addEventListener('enter-page', event => {
+  const { broadcaster } = event.detail.chaturbate;
+
+  chrome.storage.local.set({ broadcaster });
 });
 
 WS.events.addEventListener('translation', event => {
