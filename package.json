@@ -23,7 +23,8 @@
     "webpack-cli": "^3.2.1"
   },
   "scripts": {
-    "start": "npx webpack --watch",
+    "build": "npx webpack",
+    "build:watch": "npx webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

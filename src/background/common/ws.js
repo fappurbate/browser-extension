@@ -25,6 +25,16 @@ function sendQueue() {
   }
 }
 
+function emit(subject, data) {
+  const msg = {
+    type: 'event',
+    subject,
+    ...data && { data }
+  };
+
+  sendMessage(JSON.stringify(msg));
+}
+
 let nextRequestId = 0;
 const requests = {};
 
@@ -45,7 +55,21 @@ async function request(subject, data) {
       fail: reject
     };
   });
-};
+}
+
+function respond(requestId, arg2 = null, arg3 = null) {
+  const error = arg3 && arg2;
+  const data = arg3 || arg2;
+
+  const msg = {
+    type: 'response',
+    requestId,
+    ...error && { error },
+    ...data && { data }
+  };
+
+  sendMessage(msg);
+}
 
 function connect() {
   if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) { return; }
@@ -75,22 +99,9 @@ function connect() {
 
         try {
           const result = await requestHandlers.request(subject, data);
-          const msg = {
-            type: 'response',
-            requestId,
-            ...result && { data: result }
-          };
-
-          sendMessage(JSON.stringify(msg));
+          respond(requestId, result);
         } catch (error) {
-          const msg = {
-            type: 'response',
-            requestId,
-            error: error.message,
-            ...error.data && { data: error.data }
-          };
-
-          sendMessage(JSON.stringify(msg));
+          respond(requestId, error.message, error.data);
         }
       } else if (msg.type === 'response') {
         const { subject, requestId } = msg;
@@ -141,35 +152,18 @@ export function requestTipperInfo(broadcaster, tipper) {
 }
 
 export function sendTip(broadcaster, tipper, amount) {
-  const msg = {
-    type: 'event',
-    subject: 'tip',
-    data: { broadcaster, tipper, amount }
-  };
+  emit('tip', { broadcaster, tipper, amount });
+}
 
-  sendMessage(JSON.stringify(msg));
-};
-
-export function sendTranslationRequest(tabId, msgId, content) {
-  const msg = {
-    type: 'event',
-    subject: 'request-translation',
-    data: {
-      tabId,
-      msgId,
-      content: content.trim()
-    }
-  };
-
-  sendMessage(JSON.stringify(msg));
-};
+export function sendTranslationRequest(broadcaster, tabId, msgId, content) {
+  emit('request-translation', {
+    broadcaster,
+    tabId,
+    msgId,
+    content: content.trim()
+  });
+}
 
 export function sendCancelTranslationRequest(tabId, msgId) {
-  const msg = {
-    type: 'event',
-    subject: 'request-cancel-translation',
-    data: { tabId, msgId }
-  };
-
-  sendMessage(JSON.stringify(msg));
+  emit('request-cancel-translation', { tabId, msgId });
 }

@@ -6,6 +6,7 @@ import Tether from 'tether';
 import { onHold } from '../../common/util';
 import port from './common/port';
 import * as Messages from './common/messages';
+import * as Chat from './common/chat';
 
 const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
@@ -32,7 +33,7 @@ port.onMessage.addListener(msg => {
   }
 });
 
-if (Messages.isActive()) {
+if (Chat.isActive()) {
   const messageById = {};
   const dropByMessage = {};
   let currMessageId = 0;
@@ -134,7 +135,11 @@ if (Messages.isActive()) {
   function requestTranslation(translator, msgId, content) {
     port.postMessage({
       subject: 'request-translation',
-      data: { translator, msgId, content }
+      data: {
+        translator,
+        msgId,
+        content
+      }
     });
   }
 

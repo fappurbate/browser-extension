@@ -181,7 +181,17 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
   console.log(`Request translation to ${translator} (${tabId}, ${msgId}): ${content}`);
 
   if (translator === 'operator') {
-    WS.sendTranslationRequest(tabId, msgId, content);
+    chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
+      if (!activeTabId) {
+        WS.sendTranslationRequest(null, tabId, msgId, content);
+        return;
+      }
+
+      const cb = CB.byTabId(activeTabId);
+      if (cb) {
+        WS.sendTranslationRequest(cb ? cb.broadcaster : null, tabId, msgId, content);
+      }
+    });
   } else if (translator === 'gtranslate') {
     const sendTranslation = ({ translation, correction }) => {
       const cb = CB.byTabId(tabId);

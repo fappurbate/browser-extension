@@ -1,7 +1,6 @@
-import * as Messages from './messages';
+import * as Chat from './chat';
 
 const url = window.location.href;
-let ready = false;
 
 const broadcaster = (() => {
   const regexResult = /(testbed\.)?chaturbate.com\/b\/(.*?)\//.exec(url);
@@ -14,19 +13,9 @@ export function isActive() {
 }
 
 export function isReady() {
-  return ready;
+  return Chat.isReady();
 }
 
 export function getBroadcaster() {
   return broadcaster;
 }
-
-Messages.events.addEventListener('message', event => {
-  const { type, data } = event.detail;
-
-  if (type === 'system-message') {
-    if (data.content.startsWith('room subject changed to')) {
-      ready = true;
-    }
-  }
-});
