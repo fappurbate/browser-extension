@@ -35,7 +35,7 @@ if (chatList) {
   correction.addEventListener('click', () => onCorrectionClick && onCorrectionClick());
 
   function clearCorrection() {
-    correctionContainer.style.visibility = 'hidden';
+    correctionContainer.style.display = 'none';
     onCorrectionClick = null;
     correction.style.cursor = 'default';
   }
@@ -106,7 +106,7 @@ if (chatList) {
             correctionTitle.innerText = 'Did you mean: ';
             correction.style.cursor = 'pointer';
             correction.innerText = correctionInfo.didYouMean;
-            correctionContainer.style.visibility = 'visible';
+            correctionContainer.style.display = 'initial';
 
             onCorrectionClick = () => {
               input2.value = correctionInfo.didYouMean;
@@ -115,11 +115,11 @@ if (chatList) {
           } else if (correctionInfo.showingTranslationFor) {
             correctionTitle.innerText = 'Showing translation for: ';
             correction.innerText = correctionInfo.showingTranslationFor;
-            correctionContainer.style.visibility = 'visible';
+            correctionContainer.style.display = 'initial';
           } else if (correctionInfo.translateFrom) {
             correctionTitle.innerText = 'Translate from ';
             correction.innerText = correctionInfo.translateFrom;
-            correctionContainer.style.visibility = 'visible';
+            correctionContainer.style.display = 'initial';
           } else {
             clearCorrection();
           }
@@ -159,6 +159,7 @@ if (chatList) {
     input.value = tmpInput;
     input2.value = '';
     input3.value = '';
+    correctionContainer.style.display = 'none';
 
     input2.focus();
   });
@@ -167,7 +168,7 @@ if (chatList) {
 
   // Correction
 
-  correctionContainer.style.visibility = 'hidden';
+  correctionContainer.style.display = 'none';
   correctionContainer.style.marginLeft = '5px';
   correctionContainer.style.marginTop = '5px';
   correctionContainer.style.marginBottom = '3px';
