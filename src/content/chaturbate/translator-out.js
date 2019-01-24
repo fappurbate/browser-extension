@@ -174,6 +174,15 @@ if (chatList) {
   correctionContainer.appendChild(correction);
   chatForm3.parentNode.insertBefore(correctionContainer, chatForm3.nextSibling);
 
+  // Prevent switching tabs
+
+  document.body.addEventListener('keydown', event => {
+    if (event.key === 'Tab') {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+  });
+
   // Update styles
 
   function updateStyles() {
