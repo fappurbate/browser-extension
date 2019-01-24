@@ -1,0 +1,9 @@
+#source-form.translating,
+#translation-form.translating {
+  background-color: #e0e0e0;
+}
+
+#source-form.translating .send_message_button,
+#translation-form.translating .send_message_button {
+  cursor: default;
+}

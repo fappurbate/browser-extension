@@ -31,6 +31,8 @@ if (chatList) {
   const correctionTitle = document.createElement('span');
   const correction = document.createElement('span');
 
+  let translating = false;
+
   let onCorrectionClick = null;
   correction.addEventListener('click', () => onCorrectionClick && onCorrectionClick());
 
@@ -63,6 +65,8 @@ if (chatList) {
 
   // Second form
 
+  chatForm2.setAttribute('id', 'source-form');
+
   input2.removeAttribute('id');
 
   input2.addEventListener('keydown', event => {
@@ -84,6 +88,14 @@ if (chatList) {
   sendMessageButton2.addEventListener('click', event => {
     event.preventDefault();
 
+    if (translating) { return; }
+
+    translating = true;
+    chatForm2.classList.add('translating');
+    input2.setAttribute('disabled', '');
+    chatForm3.classList.add('translating');
+    input3.setAttribute('disabled', '');
+
     chrome.runtime.sendMessage({
       subject: 'translation',
       data: {
@@ -93,6 +105,13 @@ if (chatList) {
   	    translator: 'gtranslate'
   	  }
     }, response => {
+      translating = false;
+      chatForm2.classList.remove('translating');
+      input2.removeAttribute('disabled');
+      chatForm3.classList.remove('translating');
+      input3.removeAttribute('disabled');
+      input2.focus();
+
       if (chrome.runtime.lastError) {
       	input3.value = `Error: ${chrome.runtime.lastError.message}.`;
       } else if (response.error) {
@@ -134,6 +153,8 @@ if (chatList) {
 
   // Third form
 
+  chatForm3.setAttribute('id', 'translation-form');
+
   input3.removeAttribute('id');
 
   input3.addEventListener('keydown', event => {
@@ -152,6 +173,8 @@ if (chatList) {
 
   sendMessageButton3.addEventListener('click', event => {
     event.preventDefault();
+
+    if (translating) { return; }
 
     const tmpInput = input.value;
     input.value = input3.value;
