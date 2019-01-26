@@ -1,3 +1,5 @@
+import port from './port';
+
 const chatBox = document.querySelector('.chat-box');
 const publicChatList = document.querySelector('.chat-list');
 
@@ -7,6 +9,13 @@ export function isActive() {
 
 const eventHandlers = new EventTarget;
 export { eventHandlers as events };
+
+eventHandlers.addEventListener('message', event => {
+  port.postMessage({
+    subject: 'message',
+    data: event.detail
+  });
+});
 
 function handleMessageNode(node, pm = false) {
   const content = node.innerText;

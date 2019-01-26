@@ -1,3 +1,4 @@
+import port from './port';
 import * as Messages from './messages';
 
 const url = window.location.href;
@@ -44,5 +45,23 @@ Messages.events.addEventListener('message', event => {
 
   if (type === 'subject-change') {
     ready = true;
+    port.postMessage({
+      subject: 'meta',
+      data: {
+        type: 'chat-ready'
+      }
+    });
   }
 });
+
+if (isActive()) {
+  setTimeout(() => {
+    port.postMessage({
+      subject: 'meta',
+      data: {
+        type: 'chat-open',
+        owner: broadcaster
+      }
+    });
+  });
+}

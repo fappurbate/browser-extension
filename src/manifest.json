@@ -3,7 +3,7 @@
   "version": "0.1",
   "description": "Sniff your Chaturbate!",
   "permissions": [
-    "tabs", "https://*/*", "declarativeContent", "debugger", "storage", "webRequest"
+    "tabs", "https://*/*", "declarativeContent", "storage"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://unpkg.com; object-src 'self'",
   "background": {

@@ -1,210 +1,105 @@
 import 'babel-polyfill';
+import 'chrome-storage-promise';
+
+import * as Storage from '../common/storage-queue';
+
 import * as WS from './common/ws';
 import * as CB from './common/chaturbate';
+import * as Chat from './common/chat';
+import * as Broadcast from './common/broadcast';
 import * as GTranslate from './gtranslate';
 import './account-activity';
 import './tipper-info';
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    activeTabId: null,
-    broadcaster: null,
-    oldSkipped: false,
-    backend: 'ws://localhost:8889'
-  }, () => {
-    // ...
-  });
+chrome.runtime.onInstalled.addListener(async () => {
+  await Storage.set({ backend: 'ws://localhost:8889' });
 });
 
 const audio = document.createElement('audio');
 audio.setAttribute('src', '/assets/audio/private-show-end.ogg');
 
-window.addEventListener('load', () => {
-  document.body.appendChild(audio);
-});
+Broadcast.events.addEventListener('open', event => {
+  const { tabId, port } = event.detail;
 
-chrome.debugger.onEvent.addListener((source, method, params) => {
-  if (method === 'Network.webSocketFrameSent') {
-    const payload = params.response.payloadData;
+  port.onMessage.addListener(async msg => {
+    if (msg.subject === 'message') {
+      const { cbInfo } = await Storage.get(['cbInfo']);
+      const info = cbInfo[tabId];
 
-    if (payload[0] === '[') {
-      const data = JSON.parse(JSON.parse(payload)[0]);
+      if (!info.chat.ready) { return; }
 
-      if (data.method === 'connect') {
-        // chrome.storage.local.set({ broadcaster: data.data.user }, () => {
-          // ...
-        // });
-      } else if (data.method === 'leavePrivateRoom') {
-        audio.play();
+      const { type, data } = msg.data;
+
+      if (type === 'tip') {
+        const { node, pm, username: tipper, amount } = data;
+        onTip(info.chat.owner, tipper, amount);
+      } else if (type === 'private-show-end') {
+          audio.play();
       }
-    }
-  }
-
-  else if (method === 'Network.webSocketFrameReceived') {
-    const payload = params.response.payloadData;
-
-    if (payload[0] === 'a') {
-      const data = JSON.parse(JSON.parse(payload.substr(1))[0]);
-
-      chrome.storage.local.get(['oldSkipped'], ({ oldSkipped }) => {
-        if (data.method === 'onRoomCountUpdate') {
-          chrome.storage.local.set({ oldSkipped: true }, () => {
-            // ...
-          });
-        } else if (data.method === 'onNotify') {
-          if (oldSkipped === false) { return; }
-
-          if (!data.args.length) { return; }
-          const notification = JSON.parse(data.args[0]);
-
-          if (notification.type === 'tip_alert') {
-            onTip(notification.from_username, notification.amount);
-          }
-        }
-      });
-    }
-  }
-});
-
-chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-  chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
-    if (tabId === activeTabId) {
-      console.log('Disconnected from the broadcast page.');
-
-      chrome.storage.local.set({
-        activeTabId: null,
-        broadcaster: null,
-        oldSkipped: false
-      }, () => {
-        // ...
-      });
     }
   });
 });
 
-chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete') {
-    chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
-      if (tab.url.indexOf('chaturbate.com/b/') === -1) {
-        // Navigated away from broadcasting in the same tab
-        if (tabId === activeTabId) {
-          chrome.storage.local.set({
-            activeTabId: null,
-            broadcaster: null,
-            oldSkipped: false
-          }, () => {
-            console.log(`Detaching debugger from the old broadcast page...`);
-            chrome.debugger.detach({ tabId }, () => {
-              // ...
-            });
-          });
-        }
+Chat.events.addEventListener('open', event => {
+  const { tabId, port, info } = event.detail;
 
-        return;
-      }
+  port.onMessage.addListener(async msg => {
+    const { subject, data } = msg;
 
-      console.log(`Chaturbate broadcast open at ${tab.url}`);
-      chrome.storage.local.set({
-        activeTabId: null,
-        oldSkipped: false
-      }, () => {
-        chrome.storage.local.set({ activeTabId: tabId }, async () => {
-          if (tabId !== activeTabId) { // If the tab has changed
-            const attach = () => new Promise(resolve => {
-              console.log(`Attaching debugger to the new broadcast page...`);
-              chrome.debugger.attach({ tabId }, '1.1', () => {
-                if (chrome.runtime.lastError) {
-                  console.debug(`Couldn't attach debugger: ${chrome.runtime.lastError}`);
-                } else {
-                  chrome.debugger.sendCommand({ tabId }, 'Network.enable');
-                  resolve();
-                }
-              });
-            });
-
-            if (activeTabId !== null) {
-              console.log(`Detaching debugger from the old broadcast page...`);
-              chrome.debugger.detach({ tabId: activeTabId }, async () => {
-                if (chrome.runtime.lastError) {
-                  console.debug(`Couldn't detach debugger from tab ${activeTabId}: ${$chrome.runtime.lastError}.`);
-                }
-                await attach();
-              });
-
-              return;
-            }
-
-            await attach();
-          }
-        });
-      });
-    });
-  }
+    if (subject === 'request-translation') {
+      const { translator, msgId, content } = data;
+      onRequestTranslation(translator, tabId, msgId, content);
+    } else if (subject === 'request-cancel-translation') {
+      const { msgId } = data;
+      onRequestCancelTranslation(tabId, msgId);
+    }
+  });
 });
 
-CB.events.addEventListener('port-event', event => {
-  const { subject, info, port, data } = event.detail;
-
-  if (subject === 'request-translation') {
-    const { translator, msgId, content } = data;
-    onRequestTranslation(translator, port.sender.tab.id, msgId, content);
-  } else if (subject === 'request-cancel-translation') {
-    const { msgId } = data;
-    onRequestCancelTranslation(port.sender.tab.id, msgId);
-  }
-});
-
-CB.events.addEventListener('enter-page', event => {
-  const { broadcaster } = event.detail.chaturbate;
-
-  chrome.storage.local.set({ broadcaster });
-});
-
-WS.events.addEventListener('translation', event => {
+WS.events.addEventListener('translation', async event => {
   const { tabId, msgId, content } = event.detail;
 
-  const cb = CB.byTabId(tabId);
-  if (!cb) {
-    console.debug(`Got translation, but there's no port to send it to.`);
+  const port = CB.port(tabId);
+  if (!port) {
+    console.debug(`Got translation, but there's no tab to send it to.`);
     return;
   }
 
-  cb.port.postMessage({
+  port.postMessage({
     subject: 'translation',
     data: { msgId, translation: content }
   });
 });
 
-function onTip(tipper, amount) {
+function onTip(broadcaster, tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
-
-  chrome.storage.local.get(['broadcaster'], ({ broadcaster }) => {
-    WS.sendTip(broadcaster, tipper, amount);
-  });
+  WS.sendTip(broadcaster, tipper, amount);
 }
 
 async function onRequestTranslation(translator, tabId, msgId, content) {
   console.log(`Request translation to ${translator} (${tabId}, ${msgId}): ${content}`);
 
   if (translator === 'operator') {
-    chrome.storage.local.get(['activeTabId'], ({ activeTabId }) => {
-      if (!activeTabId) {
-        WS.sendTranslationRequest(null, tabId, msgId, content);
-        return;
-      }
+    const { broadcastMainTabId } = await Storage.get(['broadcastMainTabId']);
+    console.log(broadcastMainTabId);
+    if (broadcastMainTabId) {
+      const { cbInfo } = await Storage.get(['cbInfo']);
+      const info = cbInfo[broadcastMainTabId];
 
-      const cb = CB.byTabId(activeTabId);
-      if (cb) {
-        WS.sendTranslationRequest(cb ? cb.broadcaster : null, tabId, msgId, content);
-      }
-    });
+      WS.sendTranslationRequest(info.chat.owner, tabId, msgId, content);
+    } else {
+      WS.sendTranslationRequest(null, tabId, msgId, content);
+      return;
+    }
   } else if (translator === 'gtranslate') {
-    const sendTranslation = ({ translation, correction }) => {
-      const cb = CB.byTabId(tabId);
-      if (cb) {
-        cb.port.postMessage({
+    console.log('hey!', translator, tabId, msgId, content);
+    const sendTranslation = async ({ translation, correction }) => {
+      const port = CB.port(tabId);
+
+      if (port) {
+        port.postMessage({
           subject: 'translation',
-          data: { msgId, translation, correction  }
+          data: { msgId, translation, correction }
         });
       }
     };

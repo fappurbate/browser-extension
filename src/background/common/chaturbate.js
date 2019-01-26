@@ -1,98 +1,132 @@
-import * as WS from './ws';
+import * as Storage from '../../common/storage-queue';
 
 const eventHandlers = new EventTarget;
 export { eventHandlers as events };
 
-const cbByTabId = {};
-export const byTabId = tabId => cbByTabId[tabId];
+const ports = {};
+function getPort(tabId) { return ports[tabId]; }
+export { getPort as port };
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({ cbActiveTabId: null }, () => {
-    // ...
+const initInfo = {};
+export function addInitInfo(info) {
+  Object.keys(info).forEach(key => initInfo[key] = info[key]);
+}
+
+const removedInfo = {}; // resides here until is removed by deactivate event
+
+chrome.runtime.onInstalled.addListener(async () => {
+  await Storage.set({
+    cbInfo: {},
+    cbActiveTabId: null
   });
 });
 
-eventHandlers.addEventListener('leave-page', () => {
-  chrome.storage.local.set({ cbActiveTabId: null }, () => {
-    // ...
-  });
-});
-
-eventHandlers.addEventListener('enter-page', event => {
-  const { data: tabId } = event.detail;
-
-  chrome.storage.local.set({ cbActiveTabId: tabId }, () => {
-    // ...
-  });
-});
-
-chrome.runtime.onConnect.addListener(port => {
+chrome.runtime.onConnect.addListener(async port => {
   if (port.name !== 'chaturbate') { return; }
 
-  const broadcaster = (() => {
-    const regexResult = /(testbed\.)?chaturbate.com\/(p|b)\/(.*?)\//.exec(port.sender.url);
-    if (!regexResult) {
-      const regexResult = /(testbed\.)?chaturbate.com\/(.*?)\//.exec(port.sender.url);
-      if (!regexResult) { return null; }
+  const tabId = port.sender.tab.id;
+  const windowId = port.sender.tab.windowId;
 
-      return regexResult[2];
+  ports[tabId] = port;
+
+  await Storage.set(['cbInfo'], ({ cbInfo }) => {
+    const info = {
+      ...initInfo,
+      tabId,
+      windowId,
+      metaHistory: []
+    };
+    cbInfo[tabId] = info;
+    return { cbInfo };
+  });
+
+  const { cbInfo } = await Storage.get(['cbInfo']);
+  const info = cbInfo[tabId];
+
+  // console.debug('open', port.sender.tab.id, info);
+  eventHandlers.dispatchEvent(new CustomEvent('open', {
+    detail: { tabId, port, info }
+  }));
+
+  port.onMessage.addListener(async msg => {
+    if (msg.subject === 'meta') {
+      await Storage.set(['cbInfo'], ({ cbInfo }) => {
+        cbInfo[tabId].metaHistory.push(msg.data);
+        return { cbInfo };
+      });
     }
-
-    return regexResult[3];
-  })();
-
-  const chaturbate = cbByTabId[port.sender.tab.id] = {
-    extractingAccountActivity: false,
-    broadcaster,
-    port
-  };
+  });
 
   port.onDisconnect.addListener(async () => {
-    delete cbByTabId[port.sender.tab.id];
+    delete ports[tabId];
 
-    chrome.tabs.query({ active: true, currentWindow: true }, async  ([tab]) => {
-      if (port.sender.tab.id === tab.id) {
-        eventHandlers.dispatchEvent(new CustomEvent('laeve-page'));
-      }
+    const { cbInfo } = await Storage.get(['cbInfo']);
+    const info = cbInfo[tabId];
+
+    removedInfo[tabId] = info;
+
+    await Storage.set(['cbInfo'], ({ cbInfo }) => {
+      delete cbInfo[tabId];
+      return { cbInfo };
     });
-  });
 
-  port.onMessage.addListener(msg => {
-    const event = new CustomEvent('port-event', {
-      detail: {
-        subject: msg.subject,
-        info: chaturbate,
-        port,
-        data: msg.data
-      }
-    });
-    eventHandlers.dispatchEvent(event);
-  });
-
-  chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
-    if (!tab) { return; }
-
-    if (port.sender.tab.id === tab.id) {
-      eventHandlers.dispatchEvent(new CustomEvent('enter-page', {
-        detail: {
-          data: tab.id,
-          chaturbate
-        }
-      }));
-    }
+    // console.debug('close', port.sender.tab.id, info);
+    eventHandlers.dispatchEvent(new CustomEvent('close', {
+      detail: { tabId, port, info }
+    }));
   });
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  eventHandlers.dispatchEvent(new CustomEvent('leave-page'));
+  const { cbInfo, cbActiveTabId } = await Storage.get(['cbInfo', 'cbActiveTabId']);
+  const info = cbInfo[tabId];
 
-  const chaturbate = cbByTabId[tabId];
-  if (chaturbate) {
-    eventHandlers.dispatchEvent(new CustomEvent('enter-page', {
+  if (cbActiveTabId) {
+    await Storage.set({ cbActiveTabId: null });
+    const info = removedInfo[cbActiveTabId] || cbInfo[cbActiveTabId];
+    delete removedInfo[cbActiveTabId];
+
+    // console.debug('deactivate', cbActiveTabId, cbInfo[cbActiveTabId]);
+    eventHandlers.dispatchEvent(new CustomEvent('deactivate', {
       detail: {
-        data: tabId,
-        chaturbate
+        tabId: cbActiveTabId,
+        port: getPort(cbActiveTabId),
+        info: cbInfo[cbActiveTabId]
       }
+    }));
+  }
+
+  if (info) {
+    await Storage.set({ cbActiveTabId: tabId });
+    // console.debug('activate', tabId, info);
+    const port = getPort(tabId);
+    eventHandlers.dispatchEvent(new CustomEvent('activate', {
+      detail: { tabId, port, info }
+    }));
+  } else {
+    await Storage.set({ cbActiveTabId: null });
+  }
+});
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  const { cbInfo, cbActiveTabId } = await Storage.get(['cbInfo', 'cbActiveTabId']);
+  const info = cbInfo[tabId];
+  if (!info) { return; }
+
+  const port = getPort(tabId);
+
+  if (changeInfo.status === 'loading') {
+    // console.debug('deactivate', tabId, info);
+    eventHandlers.dispatchEvent(new CustomEvent('deactivate', {
+      detail: { tabId, port, info }
+    }));
+  } else if (changeInfo.status === 'complete') {
+    if (cbActiveTabId !== tabId) {
+      await Storage.set({ cbActiveTabId: tabId });
+    }
+    // console.debug('activate', tabId, info);
+    eventHandlers.dispatchEvent(new CustomEvent('activate', {
+      detail: { tabId, port, info }
     }));
   }
 });

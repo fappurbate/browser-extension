@@ -1,9 +1,10 @@
 import * as Messages from './common/messages';
-import * as Broadcasting from './common/broadcasting';
+import * as Chat from './common/chat';
+import * as Broadcast from './common/broadcast';
 import { delay } from '../../common/util';
 
-if (Broadcasting.isActive()) {
-  const broadcaster = Broadcasting.getBroadcaster();
+if (Broadcast.isActive()) {
+  const broadcaster = Chat.getBroadcaster();
   const tippers = {};
 
   function saveTipperInfo(username, amount) {
@@ -88,7 +89,7 @@ if (Broadcasting.isActive()) {
         }
       }
     } else if (type === 'tip') {
-      if (!Broadcasting.isReady()) { return; }
+      if (!Chat.isReady()) { return; }
 
       const { username: tipper, amount } = data;
 

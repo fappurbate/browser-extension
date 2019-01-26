@@ -1,3 +1,4 @@
+import * as Storage from '../common/storage-queue';
 import { delay } from '../common/util';
 
 const TRANSLATION_TIMEOUT = 5000;
@@ -6,12 +7,8 @@ const ports = {};
 const queue = [];
 let translating = false;
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({
-    gTranslateConnected: false
-  }, () => {
-    // ...
-  });
+chrome.runtime.onInstalled.addListener(async () => {
+  await Storage.set({ gTranslateConnected: false });
 });
 
 async function translateQueue() {
@@ -36,17 +33,12 @@ async function translateQueue() {
   }
 }
 
-function onPortsChange() {
+async function onPortsChange() {
   if (Object.keys(ports).length === 0) {
-    chrome.storage.local.set({
-      gTranslateConnected: false
-    });
+    await Storage.set({ gTranslateConnected: false });
   } else {
-    chrome.storage.local.set({
-      gTranslateConnected: true
-    }, () => {
-      translateQueue()
-    });
+    await Storage.set({ gTranslateConnected: true });
+    translateQueue();
   }
 }
 

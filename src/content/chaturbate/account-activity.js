@@ -52,6 +52,8 @@ function rowToItem(date, action, tokens) {
 		};
 	}
 
+  console.log(`Unknown type of account activity history item: ${action}.`);
+
 	return null;
 }
 

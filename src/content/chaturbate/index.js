@@ -1,8 +1,10 @@
+import 'babel-polyfill';
+
 import './common/port';
 import './common/messages';
-import './common/broadcasting';
+import './common/broadcast';
 
 import './account-activity';
+import './tipper-info';
 import './translator-in';
 import './translator-out';
-import './tipper-info';

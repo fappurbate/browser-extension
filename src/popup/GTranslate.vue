@@ -17,16 +17,11 @@ export default {
   data: () => ({
     connected: false
   }),
-  created () {
-    chrome.storage.local.get(['gTranslateConnected'], ({
-      gTranslateConnected
-    }) => {
-      this.connected = gTranslateConnected;
-    });
+  async created () {
+    const { gTranslateConnected } = await this.$storage.get(['gTranslateConnected']);
+    this.connected = gTranslateConnected;
 
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace !== 'local') { return; }
-
+    this.$storage.onChanged.addListener(changes => {
       if (changes.gTranslateConnected) {
         this.connected = changes.gTranslateConnected.newValue;
       }

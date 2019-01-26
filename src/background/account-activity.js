@@ -1,47 +1,45 @@
+import * as Storage from '../common/storage-queue';
 import * as CB from './common/chaturbate';
 import * as WS from './common/ws';
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.set({ cbActiveTabExtractingAccountActivity: false }, () => {
-    // ...
-  });
-});
-
-CB.events.addEventListener('enter-page', event => {
-  const { chaturbate } = event.detail;
-
-  chrome.storage.local.set({
-    cbActiveTabExtractingAccountActivity: chaturbate.extractingAccountActivity
-  }, () => {
-    // ...
-  });
-});
-
-CB.events.addEventListener('account-activity', event => {
-  const { data: item, chaturbate } = event.detail;
-  const { broadcaster } = chaturbate;
-
-  if (item.type === 'tip') {
-    const { tipper, amount } = item.data;
-
-    WS.sendTip(broadcaster, tipper, amount);
+CB.addInitInfo({
+  accountActivity: {
+    extracting: false
   }
 });
 
-CB.events.addEventListener('extract-account-activity-start', event => {
-  const { chaturbate } = event.detail;
+CB.events.addEventListener('open', async event => {
+  const { tabId, port, info } = event.detail;
 
-  chaturbate.extractingAccountActivity = true;
-  chrome.storage.local.set({
-    cbActiveTabExtractingAccountActivity: true
-  });
-});
+  const username = (() => {
+    const regexResult = /(testbed\.)?chaturbate\.com\/(p\/)?(.*?)\//
+      .exec(port.sender.tab.url);
+    if (!regexResult) { return null; }
 
-CB.events.addEventListener('extract-account-activity-stop', () => {
-  const { chaturbate } = event.detail;
+    return regexResult[3];
+  })();
 
-  chaturbate.extractingAccountActivity = false;
-  chrome.storage.local.set({
-    cbActiveTabExtractingAccountActivity: false
+  if (!username) { return; }
+
+  port.onMessage.addListener(async msg => {
+    if (msg.subject === 'account-activity') {
+      const { data: item } = msg;
+
+      if (item.type === 'tip') {
+        const { tipper, amount } = item.data;
+
+        WS.sendTip(username, tipper, amount);
+      }
+    } else if (msg.subject === 'extract-account-activity-start') {
+      await Storage.set(['cbInfo'], ({ cbInfo }) => {
+        cbInfo[tabId].accountActivity.extracting = true;
+        return { cbInfo };
+      });
+    } else if (msg.subject === 'extract-account-activity-stop') {
+      await Storage.set(['cbInfo'], ({ cbInfo }) => {
+        cbInfo[tabId].accountActivity.extracting = false;
+        return { cbInfo };
+      });
+    }
   });
 });

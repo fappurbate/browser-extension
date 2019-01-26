@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Kothique Chaturbate Kit Chrome Extension",
   "main": "src/manifest.json",
-  "dependencies": {},
+  "dependencies": {
+    "chrome-storage-promise": "^0.1.0"
+  },
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/preset-env": "^7.2.3",

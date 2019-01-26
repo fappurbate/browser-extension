@@ -1,6 +1,6 @@
 <template>
   <div>
-    <span class="label">Backend</span>
+    <span class="label">Backend:</span>
     <input v-model="backend" @change="onBackendChange" type="text" />
   </div>
 </template>
@@ -10,26 +10,26 @@ export default {
   data: () => ({
     backend: ''
   }),
-  created () {
-    chrome.storage.local.get(['backend'], ({ backend }) => {
-      this.backend = backend;
-    });
+  async created () {
+    const { backend } = await this.$storage.get(['backend']);
+    this.backend = backend;
 
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace !== 'local') { return; }
-
+    this.$storage.onChanged.addListener(changes => {
       if (changes.backend) {
         this.backend = changes.backend.newValue;
       }
     });
   },
   methods: {
-    onBackendChange() {
-      chrome.storage.local.set({ backend: this.backend });
+    async onBackendChange() {
+      await this.$storage.set({ backend: this.backend });
     }
   }
 }
 </script>
 
 <style scoped>
+.label {
+  font-weight: bold;
+}
 </style>

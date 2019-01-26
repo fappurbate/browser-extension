@@ -1,3 +1,5 @@
+import * as Storage from '../../common/storage-queue';
+
 import RequestTarget from '../../common/request-target';
 import { CustomError } from './errors';
 
@@ -71,59 +73,59 @@ function respond(requestId, arg2 = null, arg3 = null) {
   sendMessage(msg);
 }
 
-function connect() {
+async function connect() {
   if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) { return; }
 
-  chrome.storage.local.get(['backend'], ({ backend }) => {
-    console.log(`WS: (re)connecting to ${backend}.`);
-    ws = new WebSocket(backend);
+  const { backend } = await Storage.get(['backend']);
 
-    ws.addEventListener('open', () => {
-      console.log(`WS: connected to ${backend}.`);
-      sendQueue();
-    });
+  console.log(`WS: (re)connecting to ${backend}.`);
+  ws = new WebSocket(backend);
 
-    ws.addEventListener('close', () => {
-      console.log(`WS: connection closed.`);
-      setTimeout(connect, RECONNECT_INTERVAL);
-    });
+  ws.addEventListener('open', () => {
+    console.log(`WS: connected to ${backend}.`);
+    sendQueue();
+  });
 
-    ws.addEventListener('message', async event => {
-      const msg = JSON.parse(event.data);
+  ws.addEventListener('close', () => {
+    console.log(`WS: connection closed.`);
+    setTimeout(connect, RECONNECT_INTERVAL);
+  });
 
-      if (msg.type === 'event') {
-        const { subject, data } = msg;
-        eventHandlers.dispatchEvent(new CustomEvent(subject, { detail: data }));
-      } else if (msg.type === 'request') {
-        const { subject, requestId, data } = msg;
+  ws.addEventListener('message', async event => {
+    const msg = JSON.parse(event.data);
 
-        try {
-          const result = await requestHandlers.request(subject, data);
-          respond(requestId, result);
-        } catch (error) {
-          respond(requestId, error.message, error.data);
-        }
-      } else if (msg.type === 'response') {
-        const { subject, requestId } = msg;
+    if (msg.type === 'event') {
+      const { subject, data } = msg;
+      eventHandlers.dispatchEvent(new CustomEvent(subject, { detail: data }));
+    } else if (msg.type === 'request') {
+      const { subject, requestId, data } = msg;
 
-        const callbacks = requests[requestId];
-        if (!callbacks) {
-          console.warn(`Got response to unknown request: ${requestId}.`);
-          return;
-        } else {
-          delete requests[requestId];
-        }
-        const { succeed, fail } = callbacks;
-
-        if (msg.error) {
-          const { error, data } = msg;
-          fail(new CustomError(error, data));
-        } else {
-          const { data } = msg;
-          succeed(data);
-        }
+      try {
+        const result = await requestHandlers.request(subject, data);
+        respond(requestId, result);
+      } catch (error) {
+        respond(requestId, error.message, error.data);
       }
-    });
+    } else if (msg.type === 'response') {
+      const { subject, requestId } = msg;
+
+      const callbacks = requests[requestId];
+      if (!callbacks) {
+        console.warn(`Got response to unknown request: ${requestId}.`);
+        return;
+      } else {
+        delete requests[requestId];
+      }
+      const { succeed, fail } = callbacks;
+
+      if (msg.error) {
+        const { error, data } = msg;
+        fail(new CustomError(error, data));
+      } else {
+        const { data } = msg;
+        succeed(data);
+      }
+    }
   });
 }
 
@@ -134,18 +136,14 @@ function reconnect() {
   connect();
 }
 
-chrome.storage.onChanged.addListener((changes, namespace) => {
-  if (namespace === 'local' && changes.backend) {
+Storage.onChanged.addListener(changes => {
+  if (changes.backend) {
     console.log('WS: backend url has changed.');
     reconnect();
   }
 });
 
-chrome.storage.local.get(['backend'], ({ backend }) => {
-  if (backend) {
-    connect();
-  }
-});
+Storage.get(['backend']).then(({ backend }) => backend && connect());
 
 export function requestTipperInfo(broadcaster, tipper) {
   return request('tipper-info', { broadcaster, tipper });
