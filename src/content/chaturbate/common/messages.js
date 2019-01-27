@@ -128,7 +128,7 @@ if (isActive()) {
     mutations.forEach(mutation =>
       mutation.addedNodes.forEach(node => {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          if (node.matches('.chat-list:nth-child(5)')) { // pm chat appeared
+          if (node.matches('.chat-list:not(:nth-child(3))')) { // pm chat appeared
             node.querySelectorAll('div.text').forEach(node => handleMessageNode(node, true));
             observeMessages(node, true);
           }
