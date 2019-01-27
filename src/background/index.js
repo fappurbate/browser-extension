@@ -81,7 +81,6 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
 
   if (translator === 'operator') {
     const { broadcastMainTabId } = await Storage.get(['broadcastMainTabId']);
-    console.log(broadcastMainTabId);
     if (broadcastMainTabId) {
       const { cbInfo } = await Storage.get(['cbInfo']);
       const info = cbInfo[broadcastMainTabId];
@@ -92,7 +91,6 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
       return;
     }
   } else if (translator === 'gtranslate') {
-    console.log('hey!', translator, tabId, msgId, content);
     const sendTranslation = async ({ translation, correction }) => {
       const port = CB.port(tabId);
 

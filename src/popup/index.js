@@ -26,7 +26,5 @@ new Vue({
     chaturbate: Chaturbate,
     broadcasting: Broadcasting,
     settings: Settings
-  },
-  plugins: [
-  ]
+  }
 });
