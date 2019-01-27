@@ -1,4 +1,4 @@
-import * as Storage from '../../common/storage-queue';
+import * as Storage from '.././storage';
 import * as CB from './chaturbate';
 
 const eventHandlers = new EventTarget;

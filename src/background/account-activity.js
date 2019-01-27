@@ -1,4 +1,4 @@
-import * as Storage from '../common/storage-queue';
+import * as Storage from './storage';
 import * as CB from './common/chaturbate';
 import * as WS from './common/ws';
 

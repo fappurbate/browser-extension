@@ -1,4 +1,4 @@
-import * as Storage from '../../common/storage-queue';
+import * as Storage from '.././storage';
 
 const eventHandlers = new EventTarget;
 export { eventHandlers as events };

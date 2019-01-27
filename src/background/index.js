@@ -1,7 +1,7 @@
 import 'babel-polyfill';
 import 'chrome-storage-promise';
 
-import * as Storage from '../common/storage-queue';
+import * as Storage from './storage';
 
 import * as WS from './common/ws';
 import * as CB from './common/chaturbate';

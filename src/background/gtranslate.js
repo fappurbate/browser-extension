@@ -1,4 +1,4 @@
-import * as Storage from '../common/storage-queue';
+import * as Storage from './storage';
 import { delay } from '../common/util';
 
 const TRANSLATION_TIMEOUT = 5000;
