@@ -1,60 +1,42 @@
-const ID = 'background';
+import 'chrome-storage-promise';
 
-const globalQueue = [];
+const port = chrome.runtime.connect({ name: 'storage' });
 
-globalQueue.push = function push(id) {
-  Array.prototype.push.call(this, id);
-  if (this.length === 1) {
-    onNext(id);
-    ports.forEach(port => port.postMessage({
-      subject: 'next',
-      data: { id }
-    }));
-  }
+const state = {
+  id: null
+};
+
+export function init(options) {
+  state.id = options.id;
 }
 
-globalQueue.complete = function complete() {
-  if (this.length === 0) { return; }
-
-  this.shift();
-  if (this.length > 0) {
-    const id = this[0];
-    onNext(id);
-    ports.forEach(port => port.postMessage({
-      subject: 'next',
-      data: { id }
-    }));
+const globalQueue = {
+  push(method) {
+    port.postMessage({
+      subject: 'push',
+      data: { id: state.id }
+    });
+  },
+  complete() {
+    port.postMessage({
+      subject: 'complete'
+    });
   }
-}
+};
 
+port.onMessage.addListener(msg => {
+  if (msg.subject === 'next') {
+    const { id } = msg.data;
 
-const ports = [];
-
-chrome.runtime.onConnect.addListener(port => {
-  if (port.name !== 'storage') { return; }
-
-  ports.push(port);
-
-  port.onDisconnect.addListener(port => {
-    ports.splice(ports.indexOf(port), 1);
-  });
-
-  port.onMessage.addListener(msg => {
-    if (msg.subject === 'push') {
-      const { id } = msg.data;
-
-      globalQueue.push(id);
-    } else if (msg.subject === 'complete') {
-      globalQueue.complete();
-    }
-  });
+    onNext(id);
+  }
 });
 
 
 const queue = [];
 
 async function onNext(id) {
-  if (id !== ID) { return; }
+  if (id !== state.id) { return; }
 
   const { type, getVars, callback, resolve } = queue.shift();
 
@@ -89,7 +71,7 @@ export function set(arg1, arg2) {
     };
 
     queue.push(method);
-    globalQueue.push(ID);
+    globalQueue.push(state.id);
   });
 }
 
@@ -102,7 +84,7 @@ export function get(getVars) {
     };
 
     queue.push(method);
-    globalQueue.push(ID);
+    globalQueue.push(state.id);
   });
 }
 

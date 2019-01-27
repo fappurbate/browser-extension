@@ -1,4 +1,7 @@
 import 'babel-polyfill';
+import * as Storage from '../../common/storage';
+
+Storage.init({ id: 'content/chaturbate '});
 
 import './common/port';
 import './common/messages';

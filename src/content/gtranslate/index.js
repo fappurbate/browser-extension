@@ -1,5 +1,8 @@
 import 'babel-polyfill';
+import * as Storage from '../../common/storage';
 import { delay, downThenUp } from '../../common/util';
+
+Storage.init({ id: 'content/gtranslate '});
 
 const port = chrome.runtime.connect({ name: 'gtranslate' });
 

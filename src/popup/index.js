@@ -1,10 +1,11 @@
 import 'babel-polyfill';
 import 'chrome-storage-promise';
+import * as Storage from '../common/storage';
+
+Storage.init({ id: 'popup' });
 
 import Vue from 'vue';
 import './index.css';
-
-import * as Storage from '../common/storage-queue';
 
 import GTranslate from './GTranslate.vue';
 import Chaturbate from './Chaturbate.vue';
