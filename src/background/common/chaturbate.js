@@ -43,6 +43,8 @@ chrome.runtime.onConnect.addListener(async port => {
   const { cbInfo } = await Storage.get(['cbInfo']);
   const info = cbInfo[tabId];
 
+  delete removedInfo[tabId];
+
   // console.debug('open', port.sender.tab.id, info);
   eventHandlers.dispatchEvent(new CustomEvent('open', {
     detail: { tabId, port, info }
@@ -67,7 +69,7 @@ chrome.runtime.onConnect.addListener(async port => {
 
     await Storage.set(['cbInfo'], ({ cbInfo }) => {
       delete cbInfo[tabId];
-      return { cbInfo };
+      return { cbInfo, cbActiveTabId: null };
     });
 
     // console.debug('close', port.sender.tab.id, info);
@@ -86,7 +88,7 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
     const info = removedInfo[cbActiveTabId] || cbInfo[cbActiveTabId];
     delete removedInfo[cbActiveTabId];
 
-    // console.debug('deactivate', cbActiveTabId, cbInfo[cbActiveTabId]);
+    // console.debug('deactivate1', cbActiveTabId, cbInfo[cbActiveTabId]);
     eventHandlers.dispatchEvent(new CustomEvent('deactivate', {
       detail: {
         tabId: cbActiveTabId,
@@ -116,7 +118,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   const port = getPort(tabId);
 
   if (changeInfo.status === 'loading') {
-    // console.debug('deactivate', tabId, info);
+    // console.debug('deactivate2', tabId, info);
     eventHandlers.dispatchEvent(new CustomEvent('deactivate', {
       detail: { tabId, port, info }
     }));
