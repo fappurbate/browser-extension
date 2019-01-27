@@ -1,35 +1,47 @@
 div.text:hover,
-div.text.active {
+div.text.kck-active {
   background-color: rgba(127, 127, 127, 0.3) !important;
   cursor: pointer;
-}
-
-div.text[data-msg-state="await-translation"] {
-  border: 2px solid #0c6a93;
 }
 
 div.text[data-msg-state="translated"] {
   border: 2px solid green;
 }
 
+div.text[data-loading] {
+  border: 2px solid #0c6a93;
+}
+
 div.text[data-msg-state="translated"].recent {
   border-color: orange;
 }
 
-.translation {
+.kck-translation {
   border: 2px solid green;
   border-top: none;
   margin-top: -5px;
   margin-bottom: 5px;
-  font-weight: bold;
   line-height: 120%;
 }
 
-.translation.recent {
+.kck-translation.kck-recent {
   border-color: orange;
 }
 
-#drop-overlay {
+.kck-translation > .kck-content {
+  font-weight: bold;
+}
+
+.kck-correction {
+  margin-top: 0.5rem;
+}
+
+.kck-correction > .kck-content {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.kck-drop-overlay {
   display: none;
   z-index: 99999;
   position: fixed;
@@ -39,32 +51,32 @@ div.text[data-msg-state="translated"].recent {
   bottom: 0;
 }
 
-.msg-menu {
+.kck-msg-menu {
   background-color: #0c6a93;
   border: 1px solid #0c6a93;
 }
 
-.msg-menu-button {
+.kck-msg-menu-button {
   background-color: purple;
   width: 10px;
   height: 20px;
 }
 
-.msg-menu-drop {
+.kck-msg-menu-drop {
   z-index: 100000;
 }
 
-.msg-menu-item {
+.kck-msg-menu-item {
   padding: 0.3em 0.5em;
   cursor: pointer;
   color: white;
 }
 
-.msg-menu-item:not(:last-child) {
+.kck-msg-menu-item:not(:last-child) {
   border-bottom: 1px solid white;
 }
 
-.msg-menu-item:hover {
+.kck-msg-menu-item:hover {
   background-color: white;
   color: #0c6a93;
 }

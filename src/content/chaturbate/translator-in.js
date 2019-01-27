@@ -12,31 +12,69 @@ const CURSOR_OFFSET = 3;
 const HOLD_DURATION = 500;
 const HIGHLIGHT_RECENT_TRANSLATION_DURATION = 2000;
 
-port.onMessage.addListener(msg => {
-  if (msg.subject === 'translation') {
-    const { msgId, translation, correction } = msg.data;
-
-    const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
-    msgNode.setAttribute('data-msg-state', 'translated');
-    msgNode.classList.add('recent');
-
-    const translationNode = document.createElement('div');
-    translationNode.classList.add('translation');
-    translationNode.classList.add('recent');
-    translationNode.innerText = translation;
-    msgNode.parentNode.insertBefore(translationNode, msgNode.nextSibling);
-
-    setTimeout(() => {
-      msgNode.classList.remove('recent');
-      translationNode.classList.remove('recent');
-    }, HIGHLIGHT_RECENT_TRANSLATION_DURATION);
-  }
-});
-
 if (Chat.isActive()) {
   const messageById = {};
   const dropByMessage = {};
-  let currMessageId = 0;
+  let currMessageId = 1;
+
+  port.onMessage.addListener(msg => {
+    if (msg.subject === 'translation') {
+      const { msgId, translation, correction } = msg.data;
+
+      const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
+      msgNode.setAttribute('data-msg-state', 'translated');
+      msgNode.removeAttribute('data-loading');
+      msgNode.classList.add('kck-recent');
+
+      const translationNode = document.createElement('div');
+      translationNode.classList.add('kck-translation');
+      translationNode.classList.add('kck-recent');
+      msgNode.parentNode.insertBefore(translationNode, msgNode.nextSibling);
+
+      {
+        const contentNode = document.createElement('div');
+        contentNode.classList.add('kck-content');
+        contentNode.innerText = translation;
+        translationNode.appendChild(contentNode);
+      }
+
+      if (correction && correction.didYouMean) {
+        const correctionNode = document.createElement('div');
+        correctionNode.classList.add('kck-correction');
+        translationNode.appendChild(correctionNode);
+
+        correctionNode.appendChild(document.createTextNode('Did you mean: '));
+
+        const contentNode = document.createElement('span');
+        contentNode.classList.add('kck-content');
+        contentNode.innerText = correction.didYouMean;
+
+        contentNode.addEventListener('click', () => {
+          translationNode.remove();
+
+          msgNode.setAttribute('data-loading', '');
+
+          const attr = msgNode.getAttribute('data-msg-id');
+          const msgId = attr ? Number(attr) : (() => {
+            const msgId = currMessageId++;
+            msgNode.setAttribute('data-msg-id', msgId);
+            messageById[msgId] = msgNode;
+
+            return msgId;
+          })();
+
+          requestTranslation('gtranslate', msgId, correction.didYouMean);
+        });
+
+        correctionNode.appendChild(contentNode);
+      }
+
+      setTimeout(() => {
+        msgNode.classList.remove('kck-recent');
+        translationNode.classList.remove('kck-recent');
+      }, HIGHLIGHT_RECENT_TRANSLATION_DURATION);
+    }
+  });
 
   Messages.events.addEventListener('message', event => {
     const { type, data } = event.detail;
@@ -48,47 +86,58 @@ if (Chat.isActive()) {
   });
 
   const dropOverlay = document.createElement('div');
-  dropOverlay.id = 'drop-overlay';
+  dropOverlay.classList.add('kck-drop-overlay');
   document.body.insertBefore(dropOverlay, document.body.firstChild);
 
   function onMessageAction(node) {
     const state = node.getAttribute('data-msg-state');
+    const loading = node.getAttribute('data-loading') !== null;
 
     const menu = document.createElement('div');
-    menu.classList.add('msg-menu');
+    menu.classList.add('kck-msg-menu');
 
     [
       {
         text: 'Ask Kothique',
-        show: state === 'normal' || state === 'translated',
+        show: !loading,
         action: () => {
-          node.setAttribute('data-msg-state', 'await-translation');
+          node.setAttribute('data-loading', '');
 
-          const msgId = currMessageId++;
-          node.setAttribute('data-msg-id', msgId);
-          messageById[msgId] = node;
+          const attr = node.getAttribute('data-msg-id');
+          const msgId = attr ? Number(attr) : (() => {
+            const msgId = currMessageId++;
+            node.setAttribute('data-msg-id', msgId);
+            messageById[msgId] = node;
+
+            return msgId;
+          })();
 
           requestTranslation('operator', msgId, node.innerText);
         }
       },
       {
         text: 'Ask GTranslate',
-        show: state === 'normal' || state === 'translated',
+        show: !loading,
         action: () => {
-          node.setAttribute('data-msg-state', 'await-translation');
+          node.setAttribute('data-loading', '');
 
-          const msgId = currMessageId++;
-          node.setAttribute('data-msg-id', msgId);
-          messageById[msgId] = node;
+          const attr = node.getAttribute('data-msg-id');
+          const msgId = attr ? Number(attr) : (() => {
+            const msgId = currMessageId++;
+            node.setAttribute('data-msg-id', msgId);
+            messageById[msgId] = node;
+
+            return msgId;
+          })();
 
           requestTranslation('gtranslate', msgId, node.innerText);
         }
       },
       {
         text: 'Cancel translation request',
-        show: state === 'await-translation',
+        show: loading,
         action: () => {
-          node.setAttribute('data-msg-state', 'normal');
+          node.removeAttribute('data-loading');
 
           const msgId = Number(node.getAttribute('data-msg-id'));
           requestCancelTranslation(msgId);
@@ -98,7 +147,7 @@ if (Chat.isActive()) {
       if (!show) { return; }
 
       const item = document.createElement('div');
-      item.classList.add('msg-menu-item');
+      item.classList.add('kck-msg-menu-item');
       item.innerText = text;
       item.addEventListener('click', () => {
         action();
@@ -110,7 +159,7 @@ if (Chat.isActive()) {
     const drop = dropByMessage[node] = new Drop({
       target: node,
       content: menu,
-      classes: 'msg-menu-drop',
+      classes: 'kck-msg-menu-drop',
       position: 'bottom left',
       openOn: 'click'
     });
@@ -118,7 +167,7 @@ if (Chat.isActive()) {
       dropOverlay.style.display = 'none';
       dropOverlay.removeEventListener('click', drop.finish);
 
-      node.classList.remove('active');
+      node.classList.remove('kck-active');
 
       drop.destroy();
       delete dropByMessage[node];
@@ -127,7 +176,7 @@ if (Chat.isActive()) {
     dropOverlay.style.display = 'initial';
     dropOverlay.addEventListener('click', drop.finish);
 
-    node.classList.add('active');
+    node.classList.add('kck-active');
 
     drop.open();
   }
