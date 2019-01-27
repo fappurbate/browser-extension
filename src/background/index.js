@@ -10,13 +10,11 @@ import * as Broadcast from './common/broadcast';
 import * as GTranslate from './gtranslate';
 import './account-activity';
 import './tipper-info';
+import { playAudio } from '../common/util';
 
 chrome.runtime.onInstalled.addListener(async () => {
   await Storage.set({ backend: 'ws://localhost:8889' });
 });
-
-const audio = document.createElement('audio');
-audio.setAttribute('src', '/assets/audio/private-show-end.ogg');
 
 Broadcast.events.addEventListener('open', event => {
   const { tabId, port } = event.detail;
@@ -34,7 +32,7 @@ Broadcast.events.addEventListener('open', event => {
         const { node, pm, username: tipper, amount } = data;
         onTip(info.chat.owner, tipper, amount);
       } else if (type === 'private-show-end') {
-          audio.play();
+        playAudio('/assets/audio/private-show-end.ogg');
       }
     }
   });

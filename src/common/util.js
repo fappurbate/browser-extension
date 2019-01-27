@@ -64,3 +64,9 @@ export async function downThenUp(node) {
   await delay(100);
   node.dispatchEvent(up);
 }
+
+export async function playAudio(src) {
+  const audio = document.createElement('audio');
+  audio.setAttribute('src', src);
+  audio.play();
+}
