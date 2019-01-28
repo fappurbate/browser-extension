@@ -71,7 +71,7 @@ WS.events.addEventListener('translation', async event => {
 
 function onTip(broadcaster, tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
-  WS.sendTip(broadcaster, tipper, amount);
+  WS.onTip(broadcaster, tipper, amount);
 }
 
 async function onRequestTranslation(translator, tabId, msgId, content) {

@@ -149,7 +149,7 @@ export function requestTipperInfo(broadcaster, tipper) {
   return request('tipper-info', { broadcaster, tipper });
 }
 
-export function sendTip(broadcaster, tipper, amount) {
+export function onTip(broadcaster, tipper, amount) {
   emit('tip', { broadcaster, tipper, amount });
 }
 
