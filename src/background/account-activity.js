@@ -28,7 +28,7 @@ CB.events.addEventListener('open', async event => {
       if (item.type === 'tip') {
         const { tipper, amount } = item.data;
 
-        WS.onTip(username, tipper, amount);
+        WS.emit('tip', { broadcaster: username, tipper, amount });
       }
     } else if (msg.subject === 'extract-account-activity-start') {
       await Storage.set(['cbInfo'], ({ cbInfo }) => {

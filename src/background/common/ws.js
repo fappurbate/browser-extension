@@ -1,6 +1,6 @@
-import * as Storage from '.././storage';
+import RequestTarget from '@kothique/request-target';
 
-import RequestTarget from '../../common/request-target';
+import * as Storage from '../storage';
 import { CustomError } from './errors';
 
 const RECONNECT_INTERVAL = 2000;
@@ -27,7 +27,7 @@ function sendQueue() {
   }
 }
 
-function emit(subject, data) {
+export function emit(subject, data = null) {
   const msg = {
     type: 'event',
     subject,
@@ -40,7 +40,7 @@ function emit(subject, data) {
 let nextRequestId = 0;
 const requests = {};
 
-async function request(subject, data) {
+export async function request(subject, data) {
   const requestId = nextRequestId++;
   const msg = {
     type: 'request',
@@ -144,24 +144,3 @@ Storage.onChanged.addListener(changes => {
 });
 
 Storage.get(['backend']).then(({ backend }) => backend && connect());
-
-export function requestTipperInfo(broadcaster, tipper) {
-  return request('tipper-info', { broadcaster, tipper });
-}
-
-export function onTip(broadcaster, tipper, amount) {
-  emit('tip', { broadcaster, tipper, amount });
-}
-
-export function sendTranslationRequest(broadcaster, tabId, msgId, content) {
-  emit('request-translation', {
-    broadcaster,
-    tabId,
-    msgId,
-    content: content.trim()
-  });
-}
-
-export function sendCancelTranslationRequest(tabId, msgId) {
-  emit('request-cancel-translation', { tabId, msgId });
-}

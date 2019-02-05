@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.subject === 'tipper-info') {
     const { broadcaster, tipper } = msg.data;
 
-    WS.requestTipperInfo(broadcaster, tipper)
+    WS.request('tipper-info', { broadcaster, tipper })
       .then(tipperInfo => sendResponse({ data: tipperInfo }))
       .catch(error => sendResponse({ error: error.message, data: error.data }));
 

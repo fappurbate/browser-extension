@@ -4,6 +4,7 @@
   "description": "Kothique Chaturbate Kit Chrome Extension",
   "main": "src/manifest.json",
   "dependencies": {
+    "@kothique/request-target": "^2.1.1",
     "chrome-storage-promise": "^0.1.0"
   },
   "devDependencies": {

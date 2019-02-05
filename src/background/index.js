@@ -71,7 +71,7 @@ WS.events.addEventListener('translation', async event => {
 
 function onTip(broadcaster, tipper, amount) {
   console.log(`Got ${amount} tokens from ${tipper}.`);
-  WS.onTip(broadcaster, tipper, amount);
+  WS.emit('tip', { broadcaster, tipper, amount });
 }
 
 async function onRequestTranslation(translator, tabId, msgId, content) {
@@ -83,10 +83,19 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
       const { cbInfo } = await Storage.get(['cbInfo']);
       const info = cbInfo[broadcastMainTabId];
 
-      WS.sendTranslationRequest(info.chat.owner, tabId, msgId, content);
+      WS.emit('request-translation', {
+        broadcaster: info.chat.owner,
+        tabId,
+        msgId,
+        content: content.trim()
+      });
     } else {
-      WS.sendTranslationRequest(null, tabId, msgId, content);
-      return;
+      WS.emit('request-translation', {
+        broadcaster: null,
+        tabId,
+        msgId,
+        content: content.trim()
+      });
     }
   } else if (translator === 'gtranslate') {
     const sendTranslation = async ({ translation, correction }) => {
@@ -112,5 +121,5 @@ async function onRequestTranslation(translator, tabId, msgId, content) {
 function onRequestCancelTranslation(tabId, msgId) {
   console.log(`Request cancel translation (${tabId}, ${msgId}).`);
 
-  WS.sendCancelTranslationRequest(tabId, msgId);
+  WS.emit('request-cancel-translation', { tabId, msgId });
 }
