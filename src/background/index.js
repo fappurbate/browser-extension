@@ -2,7 +2,6 @@ import 'babel-polyfill';
 import 'chrome-storage-promise';
 
 import * as Storage from './storage';
-
 import * as WS from './common/ws';
 import * as CB from './common/chaturbate';
 import * as Chat from './common/chat';
@@ -10,7 +9,8 @@ import * as Broadcast from './common/broadcast';
 import * as GTranslate from './gtranslate';
 import './account-activity';
 import './tipper-info';
-import { playAudio } from '../common/util';
+import './notifications';
+import './messages';
 
 chrome.runtime.onInstalled.addListener(async () => {
   await Storage.set({ backend: 'ws://localhost:8889' });
@@ -31,8 +31,6 @@ Broadcast.events.addEventListener('open', event => {
       if (type === 'tip') {
         const { node, pm, username: tipper, amount } = data;
         onTip(info.chat.owner, tipper, amount);
-      } else if (type === 'private-show-end') {
-        playAudio('/assets/audio/private-show-end.ogg');
       }
     }
   });
