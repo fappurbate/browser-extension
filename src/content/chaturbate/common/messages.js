@@ -77,7 +77,7 @@ function handleMessageNode(node, pm = false) {
     } else {
       console.debug(`Couldn't find out the message type: ${content}.`);
     }
-  } else {
+  } else { // No username node.
     if (content.startsWith('Notice:')) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
@@ -93,6 +93,13 @@ function handleMessageNode(node, pm = false) {
         detail: {
           type: 'private-show-request',
           data: { node, pm, username }
+        }
+      }));
+    } else if (content.startsWith('Private show has started.')) {
+      eventHandlers.dispatchEvent(new CustomEvent('message', {
+        detail: {
+          type: 'private-show-start',
+          data: { node, pm }
         }
       }));
     } else if (content.startsWith('Private show has finished.')) {
