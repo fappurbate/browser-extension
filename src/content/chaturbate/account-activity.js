@@ -3,8 +3,8 @@ import port from './common/port';
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.subject === 'start-extract-account-activity') {
     try {
-      startExtract();
       port.postMessage({ subject: 'extract-account-activity-start' });
+      startExtract();
       sendResponse({});
     } catch (error) {
       sendResponse({ error: error.message });
