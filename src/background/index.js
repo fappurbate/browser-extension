@@ -9,7 +9,7 @@ import * as Broadcast from './common/broadcast';
 import * as GTranslate from './gtranslate';
 import './account-activity';
 import './tipper-info';
-import './notifications';
+import './events';
 import './messages';
 
 chrome.runtime.onInstalled.addListener(async () => {

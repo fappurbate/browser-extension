@@ -18,7 +18,7 @@ eventHandlers.addEventListener('message', event => {
 });
 
 function handleMessageNode(node, pm = false) {
-  const content = node.innerText;
+  const content = node.textContent;
   const usernameNode = node.querySelector('.username');
 
   if (usernameNode) {

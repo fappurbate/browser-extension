@@ -3,7 +3,6 @@ import port from './common/port';
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.subject === 'start-extract-account-activity') {
     try {
-      port.postMessage({ subject: 'extract-account-activity-start' });
       startExtract();
       sendResponse({});
     } catch (error) {
@@ -11,7 +10,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
   } else if (msg.subject === 'stop-extract-account-activity') {
     stopExtract();
-    port.postMessage({ subject: 'extract-account-activity-stop' });
     sendResponse({});
   }
 });
@@ -74,12 +72,14 @@ function sendItem(item) {
 
 let observer = null;
 
-function startExtract(port) {
+function startExtract() {
 	const table = document.querySelector('.account_activity');
 
   if (!table) {
     throw new Error('Account activity not found.');
   }
+
+  port.postMessage({ subject: 'extract-account-activity-start' });
 
 	const rows = table.querySelectorAll('tr:not(:first-child):not(:last-child)');
 	rows.forEach(row => {
@@ -104,5 +104,6 @@ function stopExtract() {
 	if (observer) {
 		observer.disconnect();
 		observer = null;
+    port.postMessage({ subject: 'extract-account-activity-stop' });
 	}
 }
