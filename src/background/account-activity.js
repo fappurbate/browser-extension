@@ -30,12 +30,6 @@ CB.events.addEventListener('open', async event => {
         type,
         data
       });
-
-      if (type === 'tip') {
-        const { tipper, amount } = data;
-
-        WS.emit('tip', { broadcaster: username, tipper, amount });
-      }
     } else if (msg.subject === 'extract-account-activity-start') {
       WS.emit('extract-account-activity-start', { username });
 

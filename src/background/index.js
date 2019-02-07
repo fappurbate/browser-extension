@@ -16,26 +16,6 @@ chrome.runtime.onInstalled.addListener(async () => {
   await Storage.set({ backend: 'ws://localhost:8889' });
 });
 
-Broadcast.events.addEventListener('open', event => {
-  const { tabId, port } = event.detail;
-
-  port.onMessage.addListener(async msg => {
-    if (msg.subject === 'message') {
-      const { cbInfo } = await Storage.get(['cbInfo']);
-      const info = cbInfo[tabId];
-
-      if (!info.chat.ready) { return; }
-
-      const { type, data } = msg.data;
-
-      if (type === 'tip') {
-        const { node, pm, username: tipper, amount } = data;
-        onTip(info.chat.owner, tipper, amount);
-      }
-    }
-  });
-});
-
 Chat.events.addEventListener('open', event => {
   const { tabId, port, info } = event.detail;
 
@@ -66,11 +46,6 @@ WS.events.addEventListener('translation', async event => {
     data: { msgId, translation: content }
   });
 });
-
-function onTip(broadcaster, tipper, amount) {
-  console.log(`Got ${amount} tokens from ${tipper}.`);
-  WS.emit('tip', { broadcaster, tipper, amount });
-}
 
 async function onRequestTranslation(translator, tabId, msgId, content) {
   console.log(`Request translation to ${translator} (${tabId}, ${msgId}): ${content}`);
