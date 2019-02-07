@@ -21,6 +21,7 @@ Chat.events.addEventListener('open', event => {
           chat: info.chat
         },
         type: data.type,
+        timestamp: data.timestamp,
         data: messageData
       });
     }

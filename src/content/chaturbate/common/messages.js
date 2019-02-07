@@ -21,6 +21,8 @@ function handleMessageNode(node, pm = false) {
   const content = node.textContent;
   const usernameNode = node.querySelector('.username');
 
+  const timestamp = new Date;
+
   if (usernameNode) {
     const username = usernameNode.getAttribute('data-nick');
 
@@ -28,6 +30,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'user-message',
+          timestamp,
           data: {
             node,
             pm,
@@ -46,6 +49,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'tip',
+          timestamp,
           data: { node, pm, username, amount }
         }
       }));
@@ -55,6 +59,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'join',
+          timestamp,
           data: { node, pm, username, isBroadcaster }
         }
       }));
@@ -64,6 +69,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'leave',
+          timestamp,
           data: { node, pm, username, isBroadcaster }
         }
       }));
@@ -71,6 +77,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'new-pm',
+          timestamp,
           data: { node, username }
         }
       }));
@@ -82,6 +89,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'notice',
+          timestamp,
           data: { node, pm, content }
         }
       }));
@@ -92,6 +100,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'private-show-request',
+          timestamp,
           data: { node, pm, username }
         }
       }));
@@ -99,6 +108,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'private-show-start',
+          timestamp,
           data: { node, pm }
         }
       }));
@@ -106,6 +116,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'private-show-end',
+          timestamp,
           data: { node, pm }
         }
       }));
@@ -116,6 +127,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'subject-change',
+          timestamp,
           data: { node, pm, subject }
         }
       }));
@@ -123,6 +135,7 @@ function handleMessageNode(node, pm = false) {
       eventHandlers.dispatchEvent(new CustomEvent('message', {
         detail: {
           type: 'system-message',
+          timestamp,
           data: { node, pm, content }
         }
       }));
