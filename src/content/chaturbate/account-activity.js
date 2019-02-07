@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
-function rowToItem(date, action, tokens) {
+function rowToItem(timestamp, action, tokens) {
 	if (action.startsWith('Tip from ')) {
 		const newline = action.indexOf('\n');
 		const tipper = newline === -1
@@ -23,6 +23,7 @@ function rowToItem(date, action, tokens) {
 
 		return {
 			type: 'tip',
+      timestamp,
       data: {
     		tipper,
     		amount: tokens
@@ -33,6 +34,7 @@ function rowToItem(date, action, tokens) {
 
 		return {
 			type: 'spy-show',
+      timestamp,
       data: {
   			viewer,
   			tokens
@@ -43,6 +45,7 @@ function rowToItem(date, action, tokens) {
 
 		return {
 			type: 'private-show',
+      timestamp,
       data: {
   			viewer,
   			tokens
@@ -56,11 +59,33 @@ function rowToItem(date, action, tokens) {
 }
 
 function parseRow(node) {
-	const date = Date(node.querySelector('td:nth-child(1)').innerText);
+	const timestamp = parseDate(node.querySelector('td:nth-child(1)').innerText);
 	const action = node.querySelector('td:nth-child(2)').innerText;
 	const tokens = Number(node.querySelector('td:nth-child(3)').innerText);
 
-	return rowToItem(date, action, tokens);
+	return rowToItem(timestamp, action, tokens);
+}
+
+function parseDate(str) {
+  const result = /(.*?)\. (\d+), (\d+), (\d+)(:(\d+))? (a|p)\.m\./.exec(str);
+  if (result) {
+    const [match, month, day, year, hour12, _, minutesOrNone, ap] = result;
+
+    const hour = (hour12 => {
+      if (ap === 'a') {
+        return hour12 === 12 ? 0 : hour12;
+      } else {
+        return hour12 === 12 ? 12 : hour12 + 12;
+      }
+    })(+hour12);
+
+    const minutes = minutesOrNone || 0;
+
+    return new Date(`${year}-${day}-${month}T${hour}:${minutes}:00.000Z`);
+  } else {
+    console.warn(`Failed to parse date in account activity: ${str}.`);
+    return null;
+  }
 }
 
 function sendItem(item) {

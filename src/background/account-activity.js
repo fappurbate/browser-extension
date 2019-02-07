@@ -23,11 +23,12 @@ CB.events.addEventListener('open', async event => {
 
   port.onMessage.addListener(async msg => {
     if (msg.subject === 'account-activity') {
-      const { type, data } = msg.data;
+      const { type, timestamp, data } = msg.data;
 
       WS.emit('account-activity', {
         username,
         type,
+        timestamp,
         data
       });
     } else if (msg.subject === 'extract-account-activity-start') {
