@@ -8,6 +8,7 @@ import * as Chat from './common/chat';
 import * as Broadcast from './common/broadcast';
 import * as GTranslate from './gtranslate';
 import './account-activity';
+import './chaturbate-api';
 import './tipper-info';
 import './events';
 import './messages';

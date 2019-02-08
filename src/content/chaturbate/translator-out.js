@@ -1,4 +1,5 @@
 import { onKeyPress } from '../../common/util';
+import * as Chat from './common/chat';
 
 const chatList = document.querySelector('.chat-list');
 const usersList = document.querySelector('.users-list');
@@ -11,7 +12,7 @@ function getChatLeftMargin() {
 }
 
 if (chatList) {
-  const chatForm = document.querySelector('.chat-form');
+  const chatForm = document.querySelector('#fake-chat-form');
   const input = chatForm.querySelector('.text');
   const sendMessageButton = chatForm.querySelector('.send_message_button');
 
@@ -64,6 +65,8 @@ if (chatList) {
   section.parentNode.insertBefore(container, section.nextSibling);
 
   // Second form
+
+  chatForm2.style.display = 'block';
 
   chatForm2.setAttribute('id', 'source-form');
 
@@ -153,6 +156,8 @@ if (chatList) {
 
   // Third form
 
+  chatForm3.style.display = 'block';
+
   chatForm3.setAttribute('id', 'translation-form');
 
   input3.removeAttribute('id');
@@ -176,18 +181,21 @@ if (chatList) {
 
     if (translating) { return; }
 
-    const tmpInput = input.value;
-    input.value = input3.value;
-    sendMessageButton.click();
-    input.value = tmpInput;
+    Chat.sendMessage(input3.value);
     input2.value = '';
     input3.value = '';
     correctionContainer.style.display = 'none';
 
-    input2.focus();
+    document.body.focus();
   });
 
   chatForm2.parentNode.insertBefore(chatForm3, chatForm2.nextSibling);
+
+  document.addEventListener('keydown', event => {
+    if (document.activeElement === document.body && event.key.length === 1) {
+      input2.focus();
+    }
+  });
 
   // Correction
 

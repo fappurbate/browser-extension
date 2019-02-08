@@ -1,5 +1,5 @@
-import port from './port';
-import * as Messages from './messages';
+import port from '../port';
+import * as Messages from '../messages';
 
 const url = window.location.href;
 let ready = false;
@@ -40,21 +40,25 @@ export function getBroadcaster() {
   return broadcaster;
 }
 
-Messages.events.addEventListener('message', event => {
-  const { type, data } = event.detail;
-
-  if (type === 'subject-change') {
-    ready = true;
-    port.postMessage({
-      subject: 'meta',
-      data: {
-        type: 'chat-ready'
-      }
-    });
-  }
-});
+export let sendMessage = null;
 
 if (isActive()) {
+  sendMessage = require('./send-message').default;
+
+  Messages.events.addEventListener('message', event => {
+    const { type, data } = event.detail;
+
+    if (type === 'subject-change') {
+      ready = true;
+      port.postMessage({
+        subject: 'meta',
+        data: {
+          type: 'chat-ready'
+        }
+      });
+    }
+  });
+
   setTimeout(() => {
     port.postMessage({
       subject: 'meta',

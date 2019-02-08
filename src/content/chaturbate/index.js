@@ -8,6 +8,7 @@ import './common/messages';
 import './common/broadcast';
 
 import './account-activity';
+import './chaturbate-api';
 import './tipper-info';
 import './translator-in';
 import './translator-out';
