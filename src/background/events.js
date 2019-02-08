@@ -15,6 +15,7 @@ Broadcast.events.addEventListener('open', async event => {
       return { cbInfo };
     });
     delete previousTabByBroadcaster[info.chat.owner];
+    WS.emit('broadcast-stop', { broadcaster: info.chat.owner });
   } else {
     WS.emit('broadcast-start', { broadcaster: info.chat.owner });
   }
