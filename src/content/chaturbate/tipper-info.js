@@ -20,7 +20,7 @@ if (Broadcast.isActive()) {
   function fetchAmount(tipper) {
     return new Promise(resolve => {
       chrome.runtime.sendMessage({
-        subject: 'tipper-info',
+        subject: 'tipper',
         data: {
           broadcaster,
           tipper

@@ -11,17 +11,17 @@ Chat.events.addEventListener('open', event => {
     const { cbInfo } = await Storage.get(['cbInfo']);
     const info = cbInfo[tabId];
 
-    const messageData = { ...data.data };
-    delete messageData.node;
-
     if (subject === 'message') {
+      const messageData = { ...data.data };
+      delete messageData.node;
+
       WS.emit('message', {
         info: {
           broadcast: info.broadcast,
           chat: info.chat
         },
         type: data.type,
-        timestamp: data.timestamp,
+        timestamp: new Date(data.timestamp),
         data: messageData
       });
     }

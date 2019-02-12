@@ -13,7 +13,10 @@ export { eventHandlers as events };
 eventHandlers.addEventListener('message', event => {
   port.postMessage({
     subject: 'message',
-    data: event.detail
+    data: {
+      ...event.detail,
+      timestamp: event.detail.timestamp.toString()
+    }
   });
 });
 

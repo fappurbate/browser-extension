@@ -14,7 +14,7 @@ import './events';
 import './messages';
 
 chrome.runtime.onInstalled.addListener(async () => {
-  await Storage.set({ backend: 'ws://localhost:8889' });
+  await Storage.set({ backend: 'http://localhost:3000' });
 });
 
 Chat.events.addEventListener('open', event => {

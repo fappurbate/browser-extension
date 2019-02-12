@@ -1,13 +1,10 @@
 import RequestTarget from '@kothique/request-target';
+import io from 'socket.io-client';
 
 import * as Storage from '../storage';
 import { CustomError } from './errors';
 
-const RECONNECT_INTERVAL = 2000;
-
-const queue = [];
-
-let ws = null;
+let socket = null;
 
 const eventHandlers = new EventTarget;
 export { eventHandlers as events };
@@ -15,131 +12,71 @@ export { eventHandlers as events };
 const requestHandlers = new RequestTarget;
 export { requestHandlers as requests };
 
-function sendMessage(msg) {
-  queue.push(msg);
-  sendQueue();
-}
-
-function sendQueue() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    queue.forEach(msg => ws.send(msg));
-    queue.length = 0;
-  }
-}
-
 export function emit(subject, data = null) {
-  const msg = {
-    type: 'event',
-    subject,
-    ...data && { data }
-  };
-
-  sendMessage(JSON.stringify(msg));
+  socket.emit('event', subject, data);
 }
 
-let nextRequestId = 0;
-const requests = {};
-
-export async function request(subject, data) {
-  const requestId = nextRequestId++;
-  const msg = {
-    type: 'request',
-    requestId,
-    subject,
-    ...data && { data }
-  };
-
-  sendMessage(JSON.stringify(msg));
-
+export function request(subject, data = null) {
   return new Promise((resolve, reject) => {
-    requests[requestId] = {
-      succeed: resolve,
-      fail: reject
-    };
+    socket.emit('request', subject, ...data ? [data] : [], (err, response) => {
+      if (err) { return reject(err); }
+      resolve(response);
+    })
   });
 }
 
-function respond(requestId, arg2 = null, arg3 = null) {
-  const error = arg3 && arg2;
-  const data = arg3 || arg2;
-
-  const msg = {
-    type: 'response',
-    requestId,
-    ...error && { error },
-    ...data && { data }
-  };
-
-  sendMessage(msg);
-}
-
-async function connect() {
-  if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) { return; }
+async function connect({ reconnect = false } = {}) {
+  if (socket && socket.connected) {
+    if (reconnect) {
+      socket.close();
+    } else {
+      return;
+    }
+  }
 
   const { backend } = await Storage.get(['backend']);
 
-  console.log(`WS: (re)connecting to ${backend}.`);
-  ws = new WebSocket(backend);
+  const url = `${backend}/ext`;
 
-  ws.addEventListener('open', () => {
-    console.log(`WS: connected to ${backend}.`);
-    sendQueue();
+  console.log(`WS: ${reconnect ? 're' : ''}connecting to ${url}.`);
+  socket = io(url);
+
+  socket.on('connect', () => {
+    console.log(`WS: successfully (re)connected to ${url}.`);
   });
 
-  ws.addEventListener('close', () => {
-    console.log(`WS: connection closed.`);
-    setTimeout(connect, RECONNECT_INTERVAL);
+  socket.on('disconnect', reason => {
+    console.log(`WS: connection closed: ${reason}`);
+
+    if (reason === 'io server disconnect') {
+      socket.connect();
+    }
   });
 
-  ws.addEventListener('message', async event => {
-    const msg = JSON.parse(event.data);
+  socket.on('reconnecting', () => {
+    console.log(`WS: reconnecting to ${url}...`);
+  });
 
-    if (msg.type === 'event') {
-      const { subject, data } = msg;
-      eventHandlers.dispatchEvent(new CustomEvent(subject, { detail: data }));
-    } else if (msg.type === 'request') {
-      const { subject, requestId, data } = msg;
+  socket.on('event', (subject, data) => {
+    eventHandlers.dispatchEvent(new CustomEvent(subject, { detail: data }));
+  });
 
-      try {
-        const result = await requestHandlers.request(subject, data);
-        respond(requestId, result);
-      } catch (error) {
-        respond(requestId, error.message, error.data);
-      }
-    } else if (msg.type === 'response') {
-      const { subject, requestId } = msg;
+  socket.on('request', async (payload, ack) => {
+    const { subject, data } = payload;
 
-      const callbacks = requests[requestId];
-      if (!callbacks) {
-        console.warn(`Got response to unknown request: ${requestId}.`);
-        return;
-      } else {
-        delete requests[requestId];
-      }
-      const { succeed, fail } = callbacks;
-
-      if (msg.error) {
-        const { error, data } = msg;
-        fail(new CustomError(error, data));
-      } else {
-        const { data } = msg;
-        succeed(data);
-      }
+    try {
+      const result = await requestHandlers.request(subject, data);
+      ack({ data: result });
+    } catch (error) {
+      ack({ error: error.message, data: error.data });
     }
   });
 }
 
-function reconnect() {
-  if (ws && ws.readyState !== WebSocket.CLOSED && ws.readyState !== WebSocket.CLOSING) {
-    ws.close();
-  }
-  connect();
-}
-
 Storage.onChanged.addListener(changes => {
   if (changes.backend) {
-    console.log('WS: backend url has changed.');
-    reconnect();
+    console.log(`WS: backend url has changed to ${changes.backend.newValue}.`);
+    connect({ reconnect: true });
   }
 });
 

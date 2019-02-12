@@ -5,7 +5,8 @@
   "main": "src/manifest.json",
   "dependencies": {
     "@kothique/request-target": "^2.1.1",
-    "chrome-storage-promise": "^0.1.0"
+    "chrome-storage-promise": "^0.1.0",
+    "socket.io-client": "^2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
