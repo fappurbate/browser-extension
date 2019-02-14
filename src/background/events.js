@@ -5,6 +5,18 @@ import { playAudio } from '../common/util';
 
 const previousTabByBroadcaster = {};
 
+WS.events.addEventListener('$connect', async event => {
+  const { socket } = event.detail;
+
+  const { cbInfo } = await Storage.get(['cbInfo']);
+  Broadcast.tabIds().forEach(tabId => {
+    const info = cbInfo[tabId];
+    if (info) {
+      WS.emit('broadcast-start', { broadcaster: info.chat.owner });
+    }
+  });
+});
+
 Broadcast.events.addEventListener('open', async event => {
   const { tabId, port, info  } = event.detail;
 

@@ -43,10 +43,13 @@ async function connect({ reconnect = false } = {}) {
 
   socket.on('connect', () => {
     console.log(`WS: successfully (re)connected to ${url}.`);
+    eventHandlers.dispatchEvent(new CustomEvent('$connect', { detail: { socket } }));
   });
 
   socket.on('disconnect', reason => {
     console.log(`WS: connection closed: ${reason}`);
+
+    eventHandlers.dispatchEvent(new CustomEvent('$disconnect', { detail: { socket } }));
 
     if (reason === 'io server disconnect') {
       socket.connect();

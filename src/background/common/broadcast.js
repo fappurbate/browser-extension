@@ -7,6 +7,11 @@ export { eventHandlers as events };
 
 const broadcasts = [];
 
+function getBroadcastTabIds() {
+  return broadcasts;
+}
+export { getBroadcastTabIds as tabIds };
+
 chrome.runtime.onInstalled.addListener(async () => {
   await Storage.set({
     broadcastActiveTabId: null,

@@ -4,7 +4,7 @@
   "description": "Fappurbate Browser Extension",
   "main": "src/manifest.json",
   "dependencies": {
-    "@kothique/request-target": "^2.1.1",
+    "@kothique/request-target": "^2.3.1",
     "chrome-storage-promise": "^0.1.0",
     "socket.io-client": "^2.2.0"
   },
