@@ -1,29 +1,40 @@
 import * as Storage from './storage';
 import * as Chat from './common/chat';
+import * as CB from './common/chaturbate';
 import * as WS from './common/ws';
 
-Chat.events.addEventListener('open', event => {
-  const { tabId, port, info } = event.detail;
-
-  port.onMessage.addListener(async msg => {
-    const { subject, data } = msg;
-
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  setImmediate(async () => {
     const { cbInfo } = await Storage.get(['cbInfo']);
-    const info = cbInfo[tabId];
+    const info = cbInfo[sender.tab.id];
 
-    if (subject === 'message') {
-      const messageData = { ...data.data };
-      delete messageData.node;
+    if (!info) { return; }
 
-      WS.emit('message', {
-        info: {
-          broadcast: info.broadcast,
-          chat: info.chat
-        },
-        type: data.type,
-        timestamp: new Date(data.timestamp),
-        data: messageData
-      });
+    if (msg.subject === 'message') {
+      const { type, timestamp, info: msgInfo, data } = msg.data;
+
+      const msgData = { ...data };
+      delete msgData.node;
+
+      try {
+        const result = await WS.request('message', {
+          info: {
+            ...msgInfo,
+            broadcast: info.broadcast,
+            chat: info.chat
+          },
+          type,
+          timestamp: new Date(timestamp),
+          data: msgData
+        });
+        console.log(result);
+        sendResponse(result || {});
+      } catch (error) {
+        console.error('Failed to get onMessage handler result.', error);
+        sendResponse({});
+      }
     }
   });
+
+  return true;
 });
