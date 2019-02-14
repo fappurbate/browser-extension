@@ -1,7 +1,7 @@
 {
-  "name": "Kothique Chaturbate Kit",
+  "name": "Fappurbate Browser Extension",
   "version": "0.1",
-  "description": "Kothique Chaturbate Kit Chrome Extension",
+  "description": "Fappurbate Browser Extension",
   "permissions": [
     "tabs", "https://*/*", "declarativeContent", "storage"
   ],
@@ -11,7 +11,7 @@
   	"persistent": true
   },
   "browser_action": {
-    "default_title": "Kothique Chaturbate Kit",
+    "default_title": "Fappurbate",
   	"default_popup": "popup.html",
     "default_icon": {
       "16": "assets/images/logo16.png",

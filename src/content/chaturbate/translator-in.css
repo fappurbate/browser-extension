@@ -1,5 +1,5 @@
 div.text:hover,
-div.text.kck-active {
+div.text.fb-active {
   background-color: rgba(127, 127, 127, 0.3) !important;
   cursor: pointer;
 }
@@ -16,7 +16,7 @@ div.text[data-msg-state="translated"].recent {
   border-color: orange;
 }
 
-.kck-translation {
+.fb-translation {
   border: 2px solid green;
   border-top: none;
   margin-top: -5px;
@@ -24,24 +24,24 @@ div.text[data-msg-state="translated"].recent {
   line-height: 120%;
 }
 
-.kck-translation.kck-recent {
+.fb-translation.fb-recent {
   border-color: orange;
 }
 
-.kck-translation > .kck-content {
+.fb-translation > .fb-content {
   font-weight: bold;
 }
 
-.kck-correction {
+.fb-correction {
   margin-top: 0.5rem;
 }
 
-.kck-correction > .kck-content {
+.fb-correction > .fb-content {
   font-weight: bold;
   cursor: pointer;
 }
 
-.kck-drop-overlay {
+.fb-drop-overlay {
   display: none;
   z-index: 99999;
   position: fixed;
@@ -51,32 +51,32 @@ div.text[data-msg-state="translated"].recent {
   bottom: 0;
 }
 
-.kck-msg-menu {
+.fb-msg-menu {
   background-color: #0c6a93;
   border: 1px solid #0c6a93;
 }
 
-.kck-msg-menu-button {
+.fb-msg-menu-button {
   background-color: purple;
   width: 10px;
   height: 20px;
 }
 
-.kck-msg-menu-drop {
+.fb-msg-menu-drop {
   z-index: 100000;
 }
 
-.kck-msg-menu-item {
+.fb-msg-menu-item {
   padding: 0.3em 0.5em;
   cursor: pointer;
   color: white;
 }
 
-.kck-msg-menu-item:not(:last-child) {
+.fb-msg-menu-item:not(:last-child) {
   border-bottom: 1px solid white;
 }
 
-.kck-msg-menu-item:hover {
+.fb-msg-menu-item:hover {
   background-color: white;
   color: #0c6a93;
 }

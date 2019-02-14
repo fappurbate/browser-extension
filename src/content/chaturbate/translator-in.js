@@ -24,29 +24,29 @@ if (Chat.isActive()) {
       const msgNode = document.querySelector(`.text[data-msg-id="${msgId}"]`);
       msgNode.setAttribute('data-msg-state', 'translated');
       msgNode.removeAttribute('data-loading');
-      msgNode.classList.add('kck-recent');
+      msgNode.classList.add('fb-recent');
 
       const translationNode = document.createElement('div');
-      translationNode.classList.add('kck-translation');
-      translationNode.classList.add('kck-recent');
+      translationNode.classList.add('fb-translation');
+      translationNode.classList.add('fb-recent');
       msgNode.parentNode.insertBefore(translationNode, msgNode.nextSibling);
 
       {
         const contentNode = document.createElement('div');
-        contentNode.classList.add('kck-content');
+        contentNode.classList.add('fb-content');
         contentNode.innerText = translation;
         translationNode.appendChild(contentNode);
       }
 
       if (correction && correction.didYouMean) {
         const correctionNode = document.createElement('div');
-        correctionNode.classList.add('kck-correction');
+        correctionNode.classList.add('fb-correction');
         translationNode.appendChild(correctionNode);
 
         correctionNode.appendChild(document.createTextNode('Did you mean: '));
 
         const contentNode = document.createElement('span');
-        contentNode.classList.add('kck-content');
+        contentNode.classList.add('fb-content');
         contentNode.innerText = correction.didYouMean;
 
         contentNode.addEventListener('click', () => {
@@ -70,8 +70,8 @@ if (Chat.isActive()) {
       }
 
       setTimeout(() => {
-        msgNode.classList.remove('kck-recent');
-        translationNode.classList.remove('kck-recent');
+        msgNode.classList.remove('fb-recent');
+        translationNode.classList.remove('fb-recent');
       }, HIGHLIGHT_RECENT_TRANSLATION_DURATION);
     }
   });
@@ -86,7 +86,7 @@ if (Chat.isActive()) {
   });
 
   const dropOverlay = document.createElement('div');
-  dropOverlay.classList.add('kck-drop-overlay');
+  dropOverlay.classList.add('fb-drop-overlay');
   document.body.insertBefore(dropOverlay, document.body.firstChild);
 
   function onMessageAction(node) {
@@ -94,7 +94,7 @@ if (Chat.isActive()) {
     const loading = node.getAttribute('data-loading') !== null;
 
     const menu = document.createElement('div');
-    menu.classList.add('kck-msg-menu');
+    menu.classList.add('fb-msg-menu');
 
     [
       {
@@ -147,7 +147,7 @@ if (Chat.isActive()) {
       if (!show) { return; }
 
       const item = document.createElement('div');
-      item.classList.add('kck-msg-menu-item');
+      item.classList.add('fb-msg-menu-item');
       item.innerText = text;
       item.addEventListener('click', () => {
         action();
@@ -159,7 +159,7 @@ if (Chat.isActive()) {
     const drop = dropByMessage[node] = new Drop({
       target: node,
       content: menu,
-      classes: 'kck-msg-menu-drop',
+      classes: 'fb-msg-menu-drop',
       position: 'bottom left',
       openOn: 'click'
     });
@@ -167,7 +167,7 @@ if (Chat.isActive()) {
       dropOverlay.style.display = 'none';
       dropOverlay.removeEventListener('click', drop.finish);
 
-      node.classList.remove('kck-active');
+      node.classList.remove('fb-active');
 
       drop.destroy();
       delete dropByMessage[node];
@@ -176,7 +176,7 @@ if (Chat.isActive()) {
     dropOverlay.style.display = 'initial';
     dropOverlay.addEventListener('click', drop.finish);
 
-    node.classList.add('kck-active');
+    node.classList.add('fb-active');
 
     drop.open();
   }

@@ -1,7 +1,7 @@
 {
-  "name": "kck-chrome-extension",
+  "name": "fappurbate-browser-extension",
   "version": "0.1.0",
-  "description": "Kothique Chaturbate Kit Chrome Extension",
+  "description": "Fappurbate Browser Extension",
   "main": "src/manifest.json",
   "dependencies": {
     "@kothique/request-target": "^2.1.1",
@@ -33,12 +33,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kothique/kck-chrome-extension.git"
+    "url": "git+https://github.com/fappurbate/browser-extension.git"
   },
   "author": "Kothique Félixx",
   "license": "WTFPL",
   "bugs": {
-    "url": "https://github.com/kothique/kck-chrome-extension/issues"
+    "url": "https://github.com/fappurbate/browser-extension/issues"
   },
-  "homepage": "https://github.com/kothique/kck-chrome-extension#readme"
+  "homepage": "https://github.com/fappurbate/browser-extension#readme"
 }
