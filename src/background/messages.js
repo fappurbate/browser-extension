@@ -27,7 +27,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           timestamp: new Date(timestamp),
           data: msgData
         });
-        console.log(result);
         sendResponse(result || {});
       } catch (error) {
         console.error('Failed to get onMessage handler result.', error);
