@@ -108,7 +108,7 @@ function handleMessageNode(node, pm = false) {
       handleMessage({
         type: 'notice',
         timestamp,
-        data: { node, pm, content }
+        data: { node, pm, content: content.substr('Notice: '.length) }
       });
     } else if (content.includes('start private show')) {
       const i = content.indexOf(' wants');

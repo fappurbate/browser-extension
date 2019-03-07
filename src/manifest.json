@@ -3,7 +3,7 @@
   "version": "0.1",
   "description": "Fappurbate Browser Extension",
   "permissions": [
-    "tabs", "https://*/*", "declarativeContent", "storage"
+    "tabs", "https://*/*", "http://*/*", "storage"
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval' https://unpkg.com; object-src 'self'",
   "background": {
