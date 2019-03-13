@@ -32,21 +32,6 @@ Broadcast.events.addEventListener('open', async event => {
     WS.emit('broadcast-start', { broadcaster: info.chat.owner });
   }
   previousTabByBroadcaster[info.chat.owner] = tabId;
-
-  port.onMessage.addListener(async msg => {
-    if (msg.subject === 'message') {
-      const { cbInfo } = await Storage.get(['cbInfo']);
-      const info = cbInfo[tabId];
-
-      if (!info.chat.ready) { return; }
-
-      const { type, data } = msg.data;
-
-      if (type === 'private-show-end') {
-        playAudio('/assets/audio/private-show-end.ogg');
-      }
-    }
-  });
 });
 
 Broadcast.events.addEventListener('close', event => {
